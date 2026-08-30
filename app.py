@@ -183,10 +183,12 @@ def analisar_imagem():
         3. Se não encontrar alguma informação na imagem, deixe o valor do campo vazio ("").
         """
 
-        # Inicializa o modelo de visão do Gemini
-        model = genai.GenerativeModel('models/gemini-1.5-flash')
+        # Inicializa o modelo usando a versão estável atualizada
+        
+        model = genai.GenerativeModel(model_name="gemini-1.5-flash-latest")
         
         resposta = model.generate_content([instrucao_prompt, img])
+
         
         # Limpa e converte o texto retornado para um dicionário JSON válido
         texto_limpo = resposta.text.strip().replace("```json", "").replace("```", "")
