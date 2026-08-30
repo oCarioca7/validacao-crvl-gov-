@@ -2,7 +2,7 @@ import os
 import uuid
 import sqlite3
 from datetime import datetime, timezone, timedelta
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, Response
 
 app = Flask(__name__)
 DB_FILE = "base_vio_nacional.db"
@@ -29,19 +29,36 @@ inicializar_banco()
 def admin():
     return render_template('admin.html')
 
+@app.route('/manifest.json')
+def manifest():
+    manifest_data = """{
+        "name": "Vio - Validador",
+        "short_name": "Vio",
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#002d56",
+        "theme_color": "#002d56",
+        "icons": [
+            {
+                "src": "https://icons8.com",
+                "sizes": "192x192",
+                "type": "image/png"
+            }
+        ]
+    }"""
+    return Response(manifest_data, mimetype='application/json')
+
 @app.route('/api/criar', methods=['POST'])
 def criar_registro():
     dados = request.get_json() or {}
     novo_id = str(uuid.uuid4())
     
-    # Mascarar o chassi (Ex: 9BW***1234)
     chassi = dados.get('chassi', '').strip()
     if len(chassi) >= 6:
         chassi_mascarado = chassi[:3] + ("*" * (len(chassi) - 7)) + chassi[-4:]
     else:
         chassi_mascarado = chassi
 
-    # Fuso horário do Brasil (UTC-3)
     fuso_br = timezone(timedelta(hours=-3))
     data_hora_atual = datetime.now(fuso_br).strftime('%d/%m/%Y %H:%M:%S')
 
@@ -76,13 +93,13 @@ def validar(doc_id):
 
     if row:
         dados = {
-            "nome": row[0],
-            "placa": row[1],
-            "renavam": row[2],
-            "chassi_mascarado": row[3],
-            "modelo": row[4],
-            "ano": row[5],
-            "data_hora": row[6]
+            "nome": row,
+            "placa": row,
+            "renavam": row,
+            "chassi_mascarado": row,
+            "modelo": row,
+            "ano": row,
+            "data_hora": row
         }
         return render_template('validacao.html', dados=dados)
     else:
