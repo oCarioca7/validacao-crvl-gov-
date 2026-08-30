@@ -1,17 +1,18 @@
 import os
-import json
 import datetime
-from flask import Flask, request, jsonify, render_template_string
-import google.generativeai as genai
-from PIL import Image
-import io
+from flask import Flask, render_template_string
 
 app = Flask(__name__)
 
-# Configuração de Segurança da API Key do Gemini
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
+# Lista de campos oficiais do Vio para você preencher no painel admin
+CAMPOS_ADMIN = [
+    "Placa",
+    "RENAVAM",
+    "Chassi (4 últimos dígitos)",
+    "Marca / Modelo",
+    "Ano",
+    "Nome Completo do Proprietário"
+]
 
 HTML_INTERFACE = """
 <!DOCTYPE html>
@@ -21,146 +22,125 @@ HTML_INTERFACE = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Validador Vio Oficial - SENATRAN</title>
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #eef2f5; margin: 0; padding: 10px; color: #333; display: flex; justify-content: center; }
-        .phone-container { width: 100%; max-width: 410px; background: #ffffff; min-height: 90vh; border-radius: 24px; box-shadow: 0 12px 30px rgba(0,0,0,0.15); padding: 20px; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .panel { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); height: fit-content; }
+        h2 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; font-size: 18px; }
         
-        /* Topo da Tela */
+        /* Formulário Admin */
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-weight: 600; margin-bottom: 4px; color: #34495e; font-size: 13px; }
+        input[type="text"] { width: 100%; padding: 10px 12px; border: 1px solid #ccd1d9; border-radius: 6px; box-sizing: border-box; background-color: #fdfdfd; font-size: 14px; color: #444; }
+        
+        /* Layout Celular - Padrão Vio Original */
+        .phone-preview { width: 100%; max-width: 380px; background: #ffffff; min-height: 650px; border-radius: 24px; box-shadow: 0 12px 30px rgba(0,0,0,0.15); padding: 20px; box-sizing: border-box; margin: 0 auto; }
         .vio-header { text-align: center; margin-bottom: 18px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; }
-        .vio-header .gov-title { font-size: 11px; font-weight: bold; color: #0056b3; letter-spacing: 0.5px; margin: 0; }
-        .vio-header .ministry { font-size: 13px; color: #4a5568; margin: 3px 0 0 0; font-weight: 600; }
+        .vio-header .gov-title { font-size: 10px; font-weight: bold; color: #0056b3; letter-spacing: 0.5px; margin: 0; }
+        .vio-header .ministry { font-size: 12px; color: #4a5568; margin: 3px 0 0 0; font-weight: 600; }
         
-        /* Caixa de Upload Inicial */
-        .upload-zone { border: 2px dashed #cbd5e1; padding: 30px 15px; text-align: center; border-radius: 14px; background: #f8fafc; cursor: pointer; margin-bottom: 15px; }
-        .upload-zone:hover { border-color: #0056b3; background: #f0f7ff; }
-        #btnScan { background: #0056b3; color: white; border: none; padding: 12px; font-weight: bold; border-radius: 8px; width: 100%; cursor: pointer; font-size: 15px; }
-        #btnScan:disabled { background: #cbd5e1; cursor: not-allowed; }
+        /* Caixa Verde Oficial Vio */
+        .status-box { background-color: #e6f6ec; border: 2px solid #23a95c; border-radius: 14px; padding: 14px; text-align: center; margin-bottom: 20px; }
+        .status-box .icon { font-size: 28px; color: #23a95c; margin-bottom: 2px; font-weight: bold; }
+        .status-box .title { font-size: 16px; font-weight: 800; color: #23a95c; margin: 0; letter-spacing: 0.5px; text-transform: uppercase; }
         
-        /* Interface de Sucesso Vio (Escondida Inicialmente) */
-        #validationResult { display: none; }
-        
-        .status-box { background-color: #e6f6ec; border: 2px solid #23a95c; border-radius: 14px; padding: 16px; text-align: center; margin-bottom: 20px; }
-        .status-box .icon { font-size: 32px; color: #23a95c; margin-bottom: 4px; }
-        .status-box .title { font-size: 18px; font-weight: 800; color: #23a95c; margin: 0; letter-spacing: 0.5px; }
-        
-        /* Blocos de Informação */
-        .section-title { font-size: 12px; font-weight: 700; color: #718096; text-transform: uppercase; margin: 18px 0 6px 4px; letter-spacing: 0.5px; }
-        .info-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+        /* Cards de Dados */
+        .section-title { font-size: 11px; font-weight: 700; color: #718096; text-transform: uppercase; margin: 15px 0 6px 4px; letter-spacing: 0.5px; }
+        .info-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 14px; margin-bottom: 10px; }
         .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #edf2f7; }
         .info-row:last-child { border-bottom: none; }
-        .info-label { font-size: 13px; color: #718096; font-weight: 500; }
-        .info-value { font-size: 14px; color: #1a202c; font-weight: 700; text-align: right; font-family: 'Courier New', monospace; }
+        .info-label { font-size: 12px; color: #718096; font-weight: 500; }
+        .info-value { font-size: 13px; color: #1a202c; font-weight: 700; text-align: right; font-family: Arial, sans-serif; }
         
-        /* Rodapé Oficial */
+        /* Rodapé Vio */
         .vio-footer { text-align: center; margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 15px; }
-        .vio-footer p { font-size: 11px; color: #718096; margin: 4px 0; line-height: 14px; }
-        .vio-footer .stamp { font-weight: bold; color: #4a5568; }
-        
-        .loader { display: none; text-align: center; color: #0056b3; font-weight: bold; margin: 15px 0; font-size: 14px; }
+        .vio-footer p { font-size: 10px; color: #718096; margin: 4px 0; line-height: 14px; }
+        .vio-footer .stamp { font-weight: bold; color: #4a5568; font-size: 11px; }
     </style>
 </head>
 <body>
 
-<div class="phone-container">
-    <!-- CABEÇALHO OFICIAL VIO -->
-    <div class="vio-header">
-        <p class="gov-title">SENATRAN · GOVERNO FEDERAL</p>
-        <p class="ministry">Ministério dos Transportes</p>
+<div class="container">
+    <!-- ESQUERDA: PAINEL DE CONTROLE ADMIN -->
+    <div class="panel">
+        <h2>Painel Administrativo (Digitação Manual)</h2>
+        <form id="adminForm">
+            <div class="form-group">
+                <label>Placa</label>
+                <input type="text" id="in_placa" placeholder="Ex: ABC1D23" oninput="atualizarTela()">
+            </div>
+            <div class="form-group">
+                <label>RENAVAM</label>
+                <input type="text" id="in_renavam" placeholder="Ex: 12345678901" oninput="atualizarTela()">
+            </div>
+            <div class="form-group">
+                <label>Chassi (4 últimos dígitos)</label>
+                <input type="text" id="in_chassi" placeholder="Ex: 1234" oninput="atualizarTela()">
+            </div>
+            <div class="form-group">
+                <label>Marca / Modelo</label>
+                <input type="text" id="in_modelo" placeholder="Ex: VW/GOL TLI" oninput="atualizarTela()">
+            </div>
+            <div class="form-group">
+                <label>Ano</label>
+                <input type="text" id="in_ano" placeholder="Ex: 2023/2024" oninput="atualizarTela()">
+            </div>
+            <div class="form-group">
+                <label>Nome Completo do Proprietário</label>
+                <input type="text" id="in_nome" placeholder="Ex: JOÃO DOS SANTOS SILVA" oninput="atualizarTela()">
+            </div>
+        </form>
     </div>
 
-    <!-- AREA DE ENTRADA DA OFICINA -->
-    <div id="setupZone">
-        <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
-            <span id="uploadText">📷 Fotografar ou Enviar CRVL</span>
-            <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="fileSelected()">
+    <!-- DIREITA: APP VIO ORIGINAL EM TEMPO REAL -->
+    <div class="phone-preview">
+        <div class="vio-header">
+            <p class="gov-title">SENATRAN · GOVERNO FEDERAL</p>
+            <p class="ministry">Ministério dos Transportes</p>
         </div>
-        <button id="btnScan" onclick="validarDocumento()" disabled>Consultar Base Nacional</button>
-        <div class="loader" id="loader">🤖 Processando OCR e Validando no Serpro...</div>
-    </div>
 
-    <!-- TELA DE VALIDAÇÃO DO POLICIAL (VIO) -->
-    <div id="validationResult">
         <div class="status-box">
-            <div class="icon">🔒 ✓</div>
+            <div class="icon">✓</div>
             <h2 class="title">DOCUMENTO AUTÊNTICO</h2>
         </div>
 
-        <div class="section-title">Dados do Veículo</div>
+        <div class="section-title">Veículo</div>
         <div class="info-card">
-            <div class="info-row"><span class="info-label">Placa</span><span class="info-value" id="valPlaca">-</span></div>
-            <div class="info-row"><span class="info-label">RENAVAM</span><span class="info-value" id="valRenavam">-</span></div>
-            <div class="info-row"><span class="info-label">Chassi</span><span class="info-value" id="valChassi">-</span></div>
-            <div class="info-row"><span class="info-label">Marca/Modelo</span><span class="info-value" id="valModelo">-</span></div>
-            <div class="info-row"><span class="info-label">Ano</span><span class="info-value" id="valAno">-</span></div>
+            <div class="info-row"><span class="info-label">Placa</span><span class="info-value" id="out_placa"></span></div>
+            <div class="info-row"><span class="info-label">RENAVAM</span><span class="info-value" id="out_renavam"></span></div>
+            <div class="info-row"><span class="info-label">Chassi</span><span class="info-value" id="out_chassi"></span></div>
+            <div class="info-row"><span class="info-label">Marca/Modelo</span><span class="info-value" id="out_modelo"></span></div>
+            <div class="info-row"><span class="info-label">Ano</span><span class="info-value" id="out_ano"></span></div>
         </div>
 
-        <div class="section-title">Proprietário Atual</div>
+        <div class="section-title">Proprietário</div>
         <div class="info-card">
-            <div class="info-row"><span class="info-label">Nome Completo</span><span class="info-value" id="valNome" style="text-align: left; max-width: 220px;">-</span></div>
+            <div class="info-row"><span class="info-label">Nome</span><span class="info-value" id="out_nome" style="text-align: left; max-width: 200px;"></span></div>
         </div>
 
-        <!-- RODAPÉ DA VALIDAÇÃO -->
         <div class="vio-footer">
             <p class="stamp">Emitido por: SERPRO / SENATRAN</p>
-            <p>Data/Hora da consulta: <span id="valDataHora" style="font-weight: bold;">-</span></p>
-            <p style="margin-top: 12px; font-size: 10px; color: #a0aec0;">Este documento foi consultado diretamente na base de dados nacional. A autenticidade só é garantida através do aplicativo Vio.</p>
+            <p>Data/Hora da consulta: <span style="font-weight: bold;">{{ data_hora }}</span></p>
+            <p style="margin-top: 12px; font-size: 9px; color: #a0aec0;">Este documento foi consultado diretamente na base de dados nacional. A autenticidade só é garantida através do aplicativo Vio.</p>
         </div>
     </div>
 </div>
 
 <script>
-    function fileSelected() {
-        const input = document.getElementById('fileInput');
-        if (input.files && input.files[0]) {
-            document.getElementById('uploadText').innerText = "📄 CRVL Carregado: " + input.files[0].name;
-            document.getElementById('btnScan').disabled = false;
-        }
-    }
-
-    async function validarDocumento() {
-        const fileInput = document.getElementById('fileInput');
-        const btn = document.getElementById('btnScan');
-        const loader = document.getElementById('loader');
+    function atualizarTela() {
+        // Pega o que foi digitado e joga na tela do Vio em Letras Maiúsculas
+        document.getElementById('out_placa').innerText = document.getElementById('in_placa').value.toUpperCase() || "-";
+        document.getElementById('out_renavam').innerText = document.getElementById('in_renavam').value || "-";
         
-        if (!fileInput.files[0]) return;
-
-        const formData = new FormData();
-        formData.append('schema_image', fileInput.files[0]);
-
-        btn.disabled = true;
-        loader.style.display = 'block';
-
-        try {
-            const response = await fetch('/analisar', {
-                method: 'POST',
-                body: formData
-            });
-            
-            const dados = await response.json();
-            
-            if (response.ok && dados && !dados.error) {
-                // Injeta as informações retornadas pela IA no layout do Vio
-                document.getElementById('valPlaca').innerText = dados.Placa || "NÃO ENCONTRADO";
-                document.getElementById('valRenavam').innerText = dados.Renavam || "NÃO ENCONTRADO";
-                document.getElementById('valChassi').innerText = dados.Chassi || "NÃO ENCONTRADO";
-                document.getElementById('valModelo').innerText = dados.Modelo || "NÃO ENCONTRADO";
-                document.getElementById('valAno').innerText = dados.Ano || "NÃO ENCONTRADO";
-                document.getElementById('valNome').innerText = dados.Nome || "NÃO ENCONTRADO";
-                document.getElementById('valDataHora').innerText = dados.DataHora;
-
-                // Esconde a zona de envio e mostra a tela do Vio integrada
-                document.getElementById('setupZone').style.display = 'none';
-                document.getElementById('validationResult').style.display = 'block';
-            } else {
-                alert("Falha na consulta: " + (dados.error || "Erro de leitura da imagem."));
-                btn.disabled = false;
-            }
-        } catch (error) {
-            alert("Erro de comunicação com o validador.");
-            btn.disabled = false;
-        } finally {
-            loader.style.display = 'none';
-        }
+        let chassiDig = document.getElementById('in_chassi').value;
+        document.getElementById('out_chassi').innerText = chassiDig ? "***" + chassiDig.toUpperCase() : "-";
+        
+        document.getElementById('out_modelo').innerText = document.getElementById('in_modelo').value.toUpperCase() || "-";
+        document.getElementById('out_ano').innerText = document.getElementById('in_ano').value || "-";
+        document.getElementById('out_nome').innerText = document.getElementById('in_nome').value.toUpperCase() || "-";
     }
+    
+    // Roda uma vez para limpar os traços iniciais
+    atualizarTela();
 </script>
 
 </body>
@@ -169,39 +149,11 @@ HTML_INTERFACE = """
 
 @app.route('/')
 def index():
-    return render_template_string(HTML_INTERFACE)
+    # Carimba o horário atual direto do servidor de forma estática
+    agora = datetime.datetime.now()
+    data_hora_formatada = agora.strftime("%d/%m/%Y %H:%M:%S")
+    return render_template_string(HTML_INTERFACE, data_hora=data_hora_formatada)
 
-@app.route('/analisar', methods=['POST'])
-def analisar_imagem():
-    if 'schema_image' not in request.files:
-        return jsonify({"error": "Nenhuma imagem enviada"}), 400
-        
-    arquivo = request.files['schema_image']
-    if arquivo.filename == '':
-        return jsonify({"error": "Arquivo inválido"}), 400
-
-    if not GEMINI_API_KEY:
-        return jsonify({"error": "Chave GEMINI_API_KEY não configurada no Render."}), 500
-
-    try:
-        img = Image.open(io.BytesIO(arquivo.read()))
-        if img.mode != 'RGB':
-            img = img.convert('RGB')
-        img.thumbnail((1100, 1100))
-        
-        # Prompt cirúrgico ordenando a extração dos dados e a máscara do Chassi
-        instrucao_prompt = """
-        Você é o motor de validação OCR do aplicativo Vio da SENATRAN. 
-        Analise a imagem do CRVL enviada e extraia os dados rigorosamente no seguinte formato JSON puro:
-        {
-            "Placa": "PLACA DO VEÍCULO",
-            "Renavam": "CÓDIGO RENAVAM",
-            "Chassi": "RETORNE APENAS OS 4 ÚLTIMOS DÍGITOS DO CHASSI (EX: ***1234)",
-            "Modelo": "MARCA/MODELO DO VEÍCULO",
-            "Ano": "ANO MODELO",
-            "Nome": "NOME COMPLETO DO PROPRIETÁRIO"
-        }
-        Regra fundamental: Não adicione marcações markdown como ```json, responda apenas o objeto JSON limpo.
-        """
-
-        model = genai.GenerativeModel('gemini-3.6-flash')
+if __name__ == "__main__":
+    porta = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=porta)
