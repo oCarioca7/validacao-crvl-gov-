@@ -215,7 +215,7 @@ HTML_POLICIAL = """<!DOCTYPE html>
 </div>
 </body>
 </html>"""
-    return jsonify({"id": id_consulta, "url_validacao": url_completa})
+        return jsonify({"id": id_consulta, "url_validacao": url_completa})
 
 @app.route('/validar/<id_consulta>')
 def validar_policial(id_consulta):
