@@ -1,15 +1,12 @@
 import os
-import json
-from flask import Flask, request, jsonify, render_template_string
-import google.generativeai as genai
-from PIL import Image
-import io
+from flask import Flask, render_template_string
 
 app = Flask(__name__)
 
 # ==========================================
 # PAINEL DE CONTROLE / ADMINISTRAÇÃO (CRVL)
 # ==========================================
+# Lista com todos os campos oficiais de um CRVL para você preencher.
 CAMPOS_ADMIN = [
     "Código Renavam",
     "Placa",
@@ -26,17 +23,13 @@ CAMPOS_ADMIN = [
     "Capacidade / Lotação"
 ]
 
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
-
 HTML_INTERFACE = """
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner CRVL Oficial - IA</title>
+    <title>Gerador e Preenchedor CRVL</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }
         .header-app { text-align: center; margin-bottom: 30px; background: #2c3e50; color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -44,130 +37,151 @@ HTML_INTERFACE = """
         .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .panel { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); height: fit-content; }
         h2 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; font-size: 18px; }
-        .upload-area { border: 3px dashed #bdc3c7; border-radius: 8px; padding: 40px 20px; text-align: center; cursor: pointer; background: #fafafa; transition: 0.3s; }
+        .upload-area { border: 3px dashed #bdc3c7; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; background: #fafafa; margin-bottom: 15px; }
         .upload-area:hover { border-color: #2ecc71; background: #f0fdf4; }
-        #preview { max-width: 100%; max-height: 320px; margin-top: 15px; display: none; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .form-group { margin-bottom: 12px; }
         label { display: block; font-weight: 600; margin-bottom: 4px; color: #34495e; font-size: 13px; }
         input[type="text"] { width: 100%; padding: 10px 12px; border: 1px solid #ccd1d9; border-radius: 6px; box-sizing: border-box; background-color: #fdfdfd; font-size: 14px; color: #444; }
         .btn { color: white; border: none; padding: 14px 20px; font-size: 15px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; transition: 0.2s; margin-top: 10px; display: block; text-align: center; text-decoration: none; box-sizing: border-box; }
         .btn-success { background: #2ecc71; }
         .btn-success:hover { background: #27ae60; }
-        .btn-pdf { background: #e74c3c; display: none; }
-        .btn-pdf:hover { background: #c0392b; }
-        button:disabled { background: #bdc3c7 !important; cursor: not-allowed; }
-        .loading { display: none; color: #2980b9; font-weight: bold; text-align: center; margin-top: 15px; font-size: 14px; }
-        
-        @media print {
-            body { background: white; color: black; padding: 0; }
-            .header-app { background: #1a365d !important; color: white !important; border-radius: 0; padding: 15px; -webkit-print-color-adjust: exact; }
-            .container { display: block; }
-            .panel:nth-child(1), #btnPdf { display: none !important; }
-            .panel:nth-child(2) { box-shadow: none; padding: 0; width: 100%; }
-            h2 { color: #1a365d; border-bottom: 2px solid #1a365d; font-size: 20px; }
-            .form-group { margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
-            input[type="text"] { border: none; background: transparent; padding: 5px 0; font-size: 16px; font-weight: bold; color: black; }
-            label { font-size: 12px; color: #4a5568; }
-        }
+        .canvas-container { width: 100%; overflow: auto; border: 1px solid #ccc; background: #eee; border-radius: 8px; max-height: 600px; }
+        canvas { display: block; margin: 0 auto; }
+        .helper-text { font-size: 12px; color: #7f8c8d; margin-top: 10px; line-height: 16px; }
     </style>
 </head>
 <body>
 
 <div class="header-app">
-    <h1>REPÚBLICA FEDERATIVA DO BRASIL</h1>
-    <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.9;">MINISTÉRIO DOS TRANSPORTES - SENATRAN</p>
+    <h1>SISTEMA DE PREENCHIMENTO CRVL</h1>
+    <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.9;">Gere imagens e documentos com textos carimbados sob medida</p>
 </div>
 
 <div class="container">
+    <!-- ESQUERDA: FORMULÁRIO COM TODOS OS CAMPOS CRVL -->
     <div class="panel">
-        <h2>1. Upload do CRVL Digital</h2>
+        <h2>1. Dados do Painel de Admin</h2>
+        
         <div class="upload-area" onclick="document.getElementById('fileInput').click()">
-            <span id="uploadText">Clique aqui ou arraste o documento veicular</span>
-            <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="previewImage(this)">
-            <center><img id="preview" alt="Documento carregado"></center>
+            <span id="uploadText">Selecione a Imagem/Foto de Fundo do CRVL</span>
+            <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="carregarImagemBase(this)">
         </div>
-        <button id="btnProcessar" class="btn btn-success" onclick="processarImagem()" disabled>Processar e Preencher Texto</button>
-        <div class="loading" id="loadingText">🤖 Extraindo dados estruturados do CRVL... Por favor, aguarde.</div>
-    </div>
 
-    <div class="panel">
-        <h2>2. Dados Extraídos do Veículo</h2>
         <form id="adminForm">
             {% for campo in campos %}
             <div class="form-group">
                 <label for="{{ campo }}">{{ campo }}</label>
-                <input type="text" id="{{ campo }}" name="{{ campo }}" placeholder="Aguardando processamento...">
+                <input type="text" id="{{ campo }}" class="input-doc" data-campo="{{ campo }}" placeholder="Digite para aplicar na foto..." oninput="atualizarDocumento()">
             </div>
             {% endfor %}
-            <button type="button" id="btnPdf" class="btn btn-pdf" onclick="window.print()">Gerar e Salvar Documento PDF</button>
         </form>
+        
+        <button class="btn btn-success" onclick="baixarImagemFinal()">Baixar Documento Preenchido</button>
+        <div class="helper-text">
+            <b>💡 Como posicionar os textos:</b><br>
+            1. Clique dentro de uma das caixas acima (ex: Placa).<br>
+            2. Vá na foto da direita e <b>clique no local exato</b> onde aquela informação deve ficar.<br>
+            3. Digite o valor e o texto se moverá para onde você escolheu.
+        </div>
+    </div>
+
+    <!-- DIREITA: VISUALIZAÇÃO EM TEMPO REAL -->
+    <div class="panel">
+        <h2>2. Visualização do Documento Modificado</h2>
+        <div class="canvas-container">
+            <canvas id="documentCanvas"></canvas>
+        </div>
     </div>
 </div>
 
 <script>
-    function previewImage(input) {
-        const preview = document.getElementById('preview');
-        const uploadText = document.getElementById('uploadText');
-        const btn = document.getElementById('btnProcessar');
-        const btnPdf = document.getElementById('btnPdf');
-        
+    let imagemBase = new Image();
+    const canvas = document.getElementById('documentCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Configura posições iniciais padrão espalhadas sequencialmente na tela
+    let posicoesTexto = {};
+    {% for campo in campos %}
+        posicoesTexto["{{ campo }}"] = { x: 40, y: 40 + ({{ loop.index0 }} * 35) };
+    {% endfor %}
+
+    let campoSelecionadoAtual = "Código Renavam";
+
+    // Mapeia qual campo o admin está preenchendo no momento
+    document.querySelectorAll('.input-doc').forEach(input => {
+        input.addEventListener('focus', (e) => {
+            campoSelecionadoAtual = e.target.getAttribute('data-campo');
+        });
+    });
+
+    function carregarImagemBase(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
             reader.onload = function(e) {
-                preview.src = e.target.result;
-                preview.style.display = 'block';
-                uploadText.style.display = 'none';
-                btn.disabled = false;
-                btnPdf.style.display = 'none';
-                
-                const inputs = document.querySelectorAll('#adminForm input[type="text"]');
-                inputs.forEach(inp => inp.value = '');
+                imagemBase.src = e.target.result;
+                imagemBase.onload = function() {
+                    canvas.width = imagemBase.width;
+                    canvas.height = imagemBase.height;
+                    document.getElementById('uploadText').innerText = "Modelo de CRVL carregado!";
+                    atualizarDocumento();
+                }
             }
             reader.readAsDataURL(input.files[0]);
         }
     }
 
-    async function processarImagem() {
-        const fileInput = document.getElementById('fileInput');
-        const btn = document.getElementById('btnProcessar');
-        const btnPdf = document.getElementById('btnPdf');
-        const loading = document.getElementById('loadingText');
+    function atualizarDocumento() {
+        if (!imagemBase.src) return;
         
-        if (!fileInput.files || !fileInput.files[0]) return;
-
-        const formData = new FormData();
-        formData.append('schema_image', fileInput.files[0]);
-
-        btn.disabled = true;
-        loading.style.display = 'block';
-
-        try {
-            const response = await fetch('/analisar', {
-                method: 'POST',
-                body: formData
-            });
+        // Limpa e redesenha o fundo
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(imagemBase, 0, 0);
+        
+        // Estilo da fonte do carimbo (Ajuste o tamanho '16px' se precisar de letras maiores/menores)
+        ctx.font = "bold 16px Arial";
+        ctx.fillStyle = "black";
+        
+        // Aplica o texto de cada input na respectiva coordenada cadastrada pelo clique
+        document.querySelectorAll('.input-doc').forEach(input => {
+            const nomeCampo = input.getAttribute('data-campo');
+            const valorTexto = input.value;
+            const posicao = posicoesTexto[nomeCampo];
             
-            const dados = await response.json();
-            
-            if (response.ok && dados && !dados.error) {
-                for (const [campo, valor] of Object.entries(dados)) {
-                    const inputElement = document.getElementById(campo);
-                    if (inputElement) {
-                        inputElement.value = valor;
-                    }
-                }
-                btnPdf.style.display = 'block';
-            } else {
-                alert("Falha: " + (dados.error || "Erro de resposta da IA."));
+            if (valorTexto && posicao) {
+                ctx.fillText(valorTexto, posicao.x, posicao.y);
             }
-        } catch (error) {
-            alert("Processamento finalizado.");
-        } finally {
-            btn.disabled = false;
-            loading.style.display = 'none';
+        });
+    }
+
+    // Altera a coordenada do campo selecionado ao clicar na foto
+    canvas.addEventListener('click', function(e) {
+        if (!imagemBase.src) return;
+        
+        const rect = canvas.getBoundingClientRect();
+        const escalaX = canvas.width / rect.width;
+        const escalaY = canvas.height / rect.height;
+        
+        const cliqueX = (e.clientX - rect.left) * escalaX;
+        const cliqueY = (e.clientY - rect.top) * escalaY;
+        
+        if (campoSelecionadoAtual) {
+            posicoesTexto[campoSelecionadoAtual] = { x: cliqueX, y: cliqueY };
+            atualizarDocumento();
         }
+    });
+
+    function baixarImagemFinal() {
+        if (!imagemBase.src) {
+            alert("Por favor, carregue uma imagem de fundo primeiro!");
+            return;
+        }
+        const link = document.createElement('a');
+        link.download = 'CRVL_Gerado_Preenchido.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
     }
 </script>
+
 </body>
 </html>
 """
@@ -175,36 +189,6 @@ HTML_INTERFACE = """
 @app.route('/')
 def index():
     return render_template_string(HTML_INTERFACE, campos=CAMPOS_ADMIN)
-
-@app.route('/analisar', methods=['POST'])
-def analisar_imagem():
-    if 'schema_image' not in request.files:
-        return jsonify({"error": "Nenhuma imagem enviada"}), 400
-        
-    arquivo = request.files['schema_image']
-    if arquivo.filename == '':
-        return jsonify({"error": "Arquivo inválido"}), 400
-
-    if not GEMINI_API_KEY:
-        return jsonify({"error": "Chave GEMINI_API_KEY faltando no Render."}), 500
-
-    try:
-        img = Image.open(io.BytesIO(arquivo.read()))
-        if img.mode != 'RGB':
-            img = img.convert('RGB')
-        img.thumbnail((1000, 1000))
-        
-        estrutura_exemplo = {campo: "texto" for campo in CAMPOS_ADMIN}
-        instrucao_prompt = f"Você é um leitor de OCR especialista. Analise a imagem do CRVL anexada e extraia os dados preenchendo rigorosamente este formato JSON (retorne apenas o JSON limpo, sem marcas de markdown): {json.dumps(estrutura_exemplo, ensure_ascii=False)}"
-
-        model = genai.GenerativeModel('gemini-3.6-flash')
-        resposta = model.generate_content([instrucao_prompt, img])
-        
-        texto_limpo = resposta.text.strip().replace("```json", "").replace("```", "")
-        dados_finais = json.loads(texto_limpo)
-        return jsonify(dados_finais)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     porta = int(os.environ.get("PORT", 5000))
