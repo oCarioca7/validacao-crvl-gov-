@@ -6,7 +6,6 @@ app = Flask(__name__)
 # ==========================================
 # PAINEL DE CONTROLE / ADMINISTRAÇÃO (CRVL)
 # ==========================================
-# Lista com todos os campos oficiais de um CRVL para você preencher.
 CAMPOS_ADMIN = [
     "Código Renavam",
     "Placa",
@@ -29,7 +28,7 @@ HTML_INTERFACE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador e Preenchedor CRVL</title>
+    <title>Gerador CRVL Automático</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }
         .header-app { text-align: center; margin-bottom: 30px; background: #2c3e50; color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -45,7 +44,7 @@ HTML_INTERFACE = """
         .btn { color: white; border: none; padding: 14px 20px; font-size: 15px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; transition: 0.2s; margin-top: 10px; display: block; text-align: center; text-decoration: none; box-sizing: border-box; }
         .btn-success { background: #2ecc71; }
         .btn-success:hover { background: #27ae60; }
-        .canvas-container { width: 100%; overflow: auto; border: 1px solid #ccc; background: #eee; border-radius: 8px; max-height: 600px; }
+        .canvas-container { width: 100%; overflow: auto; border: 1px solid #ccc; background: #eee; border-radius: 8px; max-height: 750px; }
         canvas { display: block; margin: 0 auto; }
         .helper-text { font-size: 12px; color: #7f8c8d; margin-top: 10px; line-height: 16px; }
     </style>
@@ -53,17 +52,17 @@ HTML_INTERFACE = """
 <body>
 
 <div class="header-app">
-    <h1>SISTEMA DE PREENCHIMENTO CRVL</h1>
-    <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.9;">Gere imagens e documentos com textos carimbados sob medida</p>
+    <h1>SISTEMA DE PREENCHIMENTO AUTOMÁTICO CRVL</h1>
+    <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.9;">Os dados digitados vão sozinhos para as posições corretas do formulário</p>
 </div>
 
 <div class="container">
-    <!-- ESQUERDA: FORMULÁRIO COM TODOS OS CAMPOS CRVL -->
+    <!-- ESQUERDA: FORMULÁRIO -->
     <div class="panel">
-        <h2>1. Dados do Painel de Admin</h2>
+        <h2>1. Painel de Dados</h2>
         
         <div class="upload-area" onclick="document.getElementById('fileInput').click()">
-            <span id="uploadText">Selecione a Imagem/Foto de Fundo do CRVL</span>
+            <span id="uploadText">Carregue o seu Modelo de CRVL em Branco</span>
             <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="carregarImagemBase(this)">
         </div>
 
@@ -71,23 +70,21 @@ HTML_INTERFACE = """
             {% for campo in campos %}
             <div class="form-group">
                 <label for="{{ campo }}">{{ campo }}</label>
-                <input type="text" id="{{ campo }}" class="input-doc" data-campo="{{ campo }}" placeholder="Digite para aplicar na foto..." oninput="atualizarDocumento()">
+                <input type="text" id="{{ campo }}" class="input-doc" data-campo="{{ campo }}" placeholder="Apenas digite aqui..." oninput="atualizarDocumento()">
             </div>
             {% endfor %}
         </form>
         
-        <button class="btn btn-success" onclick="baixarImagemFinal()">Baixar Documento Preenchido</button>
+        <button class="btn btn-success" onclick="baixarImagemFinal()">Baixar Documento Pronto</button>
         <div class="helper-text">
-            <b>💡 Como posicionar os textos:</b><br>
-            1. Clique dentro de uma das caixas acima (ex: Placa).<br>
-            2. Vá na foto da direita e <b>clique no local exato</b> onde aquela informação deve ficar.<br>
-            3. Digite o valor e o texto se moverá para onde você escolheu.
+            <b>🚀 Modo 100% Automático Ativo:</b><br>
+            Você só precisa digitar as informações na esquerda. O sistema já sabe onde fica a Placa, o Renavam e o Nome e carimba tudo no local exato do papel sozinho.
         </div>
     </div>
 
-    <!-- DIREITA: VISUALIZAÇÃO EM TEMPO REAL -->
+    <!-- DIREITA: DOCUMENTO AUTOMÁTICO -->
     <div class="panel">
-        <h2>2. Visualização do Documento Modificado</h2>
+        <h2>2. Visualização do Documento (Preenchimento Automático)</h2>
         <div class="canvas-container">
             <canvas id="documentCanvas"></canvas>
         </div>
@@ -99,53 +96,58 @@ HTML_INTERFACE = """
     const canvas = document.getElementById('documentCanvas');
     const ctx = canvas.getContext('2d');
     
-    // Configura posições iniciais padrão espalhadas sequencialmente na tela
-    let posicoesTexto = {};
-    {% for campo in campos %}
-        posicoesTexto["{{ campo }}"] = { x: 40, y: 40 + ({{ loop.index0 }} * 35) };
-    {% endfor %}
-
-    let campoSelecionadoAtual = "Código Renavam";
-
-    // Mapeia qual campo o admin está preenchendo no momento
-    document.querySelectorAll('.input-doc').forEach(input => {
-        input.addEventListener('focus', (e) => {
-            campoSelecionadoAtual = e.target.getAttribute('data-campo');
-        });
-    });
+    // ====================================================================
+    # MAPEAMENTO AUTOMÁTICO DE COORDENADAS (AJUSTADO PARA O MODELO PADRÃO)
+    // ====================================================================
+    // Aqui estão salvos os locais exatos (X e Y) de cada caixinha do documento.
+    // O texto vai pular para cá sozinho assim que você digitar.
+    const posicoesAutomaticas = {
+        "Código Renavam": { x: 70, y: 375 },
+        "Placa": { x: 70, y: 415 },
+        "Chassi": { x: 345, y: 730 },
+        "Ano Fabricação": { x: 70, y: 450 },
+        "Ano Modelo": { x: 195, y: 450 },
+        "Combustível": { x: 200, y: 775 },
+        "Marca / Modelo": { x: 70, y: 615 },
+        "Nome / Nome Empresarial (Proprietário)": { x: 620, y: 515 },
+        "CPF / CNPJ": { x: 785, y: 550 },
+        "Número do CRV": { x: 70, y: 490 },
+        "Código de Segurança do CLA": { x: 70, y: 575 },
+        "Categoria": { x: 620, y: 335 },
+        "Capacidade / Lotação": { x: 875, y: 415 }
+    };
 
     function carregarImagemBase(input) {
-        if (input.files && input.files[0]) {
+        if (input.files && input.files) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 imagemBase.src = e.target.result;
                 imagemBase.onload = function() {
-                    canvas.width = imagemBase.width;
-                    canvas.height = imagemBase.height;
-                    document.getElementById('uploadText').innerText = "Modelo de CRVL carregado!";
+                    // Força o tamanho padrão do documento impresso para bater com as coordenadas
+                    canvas.width = 1190;
+                    canvas.height = 1684;
+                    document.getElementById('uploadText').innerText = "Modelo de CRVL Pronto e Sincronizado!";
                     atualizarDocumento();
                 }
             }
-            reader.readAsDataURL(input.files[0]);
+            reader.readAsDataURL(input.files);
         }
     }
 
     function atualizarDocumento() {
         if (!imagemBase.src) return;
         
-        // Limpa e redesenha o fundo
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(imagemBase, 0, 0);
+        ctx.drawImage(imagemBase, 0, 0, canvas.width, canvas.height);
         
-        // Estilo da fonte do carimbo (Ajuste o tamanho '16px' se precisar de letras maiores/menores)
-        ctx.font = "bold 16px Arial";
-        ctx.fillStyle = "black";
+        // Estilo da fonte oficial para o preenchimento (Fonte escura estilo impressora)
+        ctx.font = "bold 20px Courier New";
+        ctx.fillStyle = "#111111";
         
-        // Aplica o texto de cada input na respectiva coordenada cadastrada pelo clique
         document.querySelectorAll('.input-doc').forEach(input => {
             const nomeCampo = input.getAttribute('data-campo');
-            const valorTexto = input.value;
-            const posicao = posicoesTexto[nomeCampo];
+            const valorTexto = input.value.toUpperCase(); // Força ficar em Letra Maiúscula padrão Detran
+            const posicao = posicoesAutomaticas[nomeCampo];
             
             if (valorTexto && posicao) {
                 ctx.fillText(valorTexto, posicao.x, posicao.y);
@@ -153,30 +155,13 @@ HTML_INTERFACE = """
         });
     }
 
-    // Altera a coordenada do campo selecionado ao clicar na foto
-    canvas.addEventListener('click', function(e) {
-        if (!imagemBase.src) return;
-        
-        const rect = canvas.getBoundingClientRect();
-        const escalaX = canvas.width / rect.width;
-        const escalaY = canvas.height / rect.height;
-        
-        const cliqueX = (e.clientX - rect.left) * escalaX;
-        const cliqueY = (e.clientY - rect.top) * escalaY;
-        
-        if (campoSelecionadoAtual) {
-            posicoesTexto[campoSelecionadoAtual] = { x: cliqueX, y: cliqueY };
-            atualizarDocumento();
-        }
-    });
-
     function baixarImagemFinal() {
         if (!imagemBase.src) {
-            alert("Por favor, carregue uma imagem de fundo primeiro!");
+            alert("Por favor, carregue a imagem do documento primeiro!");
             return;
         }
         const link = document.createElement('a');
-        link.download = 'CRVL_Gerado_Preenchido.png';
+        link.download = 'CRVL_Gerado_Automatico.png';
         link.href = canvas.toDataURL('image/png');
         link.click();
     }
