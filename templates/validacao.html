@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vio - Validação de Documentos Digitais</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f5f6f8; margin: 0; padding: 0; display: flex; justify-content: center; -webkit-font-smoothing: antialiased; }
+        .vio-wrapper { width: 100%; max-width: 450px; background: #ffffff; min-height: 100vh; box-sizing: border-box; padding: 0; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin: 0 auto; }
+        .vio-top-navbar { background: #002d56; color: white; display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; box-sizing: border-box; }
+        .vio-top-navbar .nav-left { display: flex; align-items: center; gap: 14px; font-size: 20px; cursor: pointer; }
+        .vio-top-navbar .nav-title-app { font-size: 16px; font-weight: 700; letter-spacing: 0.3px; }
+        .vio-top-navbar .nav-right { font-size: 18px; font-weight: bold; cursor: pointer; opacity: 0.8; }
+        .main-scroll-content { padding: 16px 18px; display: flex; flex-direction: column; flex: 1; }
+        .vio-app-header { text-align: center; margin-bottom: 16px; display: flex; flex-direction: column; align-items: center; }
+        .vio-app-header .top-gov { font-size: 10px; font-weight: 700; color: #004b82; letter-spacing: 0.6px; margin: 0; text-transform: uppercase; }
+        .vio-app-header .sub-gov { font-size: 12px; font-weight: 600; color: #546e7a; margin: 3px 0 0 0; }
+        .success-banner { background-color: #eaf7ed; border: 1px solid #23a95c; border-radius: 8px; padding: 11px 14px; text-align: center; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .success-banner .check-circle { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; background: #23a95c; color: white; border-radius: 50%; font-size: 12px; font-weight: bold; }
+        .success-banner .status-title { font-size: 14px; font-weight: 800; color: #23a95c; margin: 0; letter-spacing: 0.3px; }
+        .group-label { font-size: 11px; font-weight: 700; color: #78909c; text-transform: uppercase; margin: 14px 0 6px 4px; letter-spacing: 0.5px; }
+        .card-container { background: #ffffff; border: 1px solid #cfd8dc; border-radius: 8px; padding: 0 14px; margin-bottom: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.01); }
+        .data-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 11px 0; border-bottom: 1px solid #f1f3f4; }
+        .data-row:last-child { border-bottom: none; }
+        .field-label { font-size: 13px; color: #607d8b; font-weight: 500; padding-top: 1px; }
+        .field-value { font-size: 13px; color: #212121; font-weight: 700; text-align: right; max-width: 210px; word-break: break-word; }
+        .footer-stamp { text-align: center; margin-top: auto; padding-top: 25px; border-top: 1px solid #e1e8ed; }
+        .footer-stamp .authority { font-size: 11px; font-weight: 700; color: #546e7a; margin: 0; }
+        .footer-stamp .timestamp { font-size: 11px; color: #90a4ae; margin-top: 4px; }
+    </style>
+</head>
+<body>
+<div class="vio-wrapper">
+    <div class="vio-top-navbar">
+        <div class="nav-left">
+            <span>&#8592;</span>
+            <span class="nav-title-app">Validação de Documento</span>
+        </div>
+        <div class="nav-right">&#8942;</div>
+    </div>
+    <div class="main-scroll-content">
+        <div class="vio-app-header">
+            <p class="top-gov">SECRETARIA NACIONAL DE TRÂNSITO</p>
+            <p class="sub-gov">SERVIÇO FEDERAL DE PROCESSAMENTO DE DADOS (SERPRO)</p>
+        </div>
+        <div class="success-banner">
+            <span class="check-circle">&#10003;</span>
+            <span class="status-title">DOCUMENTO AUTÊNTICO E VÁLIDO</span>
+        </div>
+
+        <div class="group-label">Dados do Veículo</div>
+        <div class="card-container">
+            <div class="data-row"><span class="field-label">Placa</span><span class="field-value">{{ dados.placa }}</span></div>
+            <div class="data-row"><span class="field-label">RENAVAM</span><span class="field-value">{{ dados.renavam }}</span></div>
+            <div class="data-row"><span class="field-label">Chassi</span><span class="field-value">{{ dados.chassi_mascarado }}</span></div>
+            <div class="data-row"><span class="field-label">Marca / Modelo</span><span class="field-value">{{ dados.modelo }}</span></div>
+            <div class="data-row"><span class="field-label">Ano Fabricação / Modelo</span><span class="field-value">{{ dados.ano }}</span></div>
+        </div>
+
+        <div class="group-label">Proprietário</div>
+        <div class="card-container">
+            <div class="data-row"><span class="field-label">Nome</span><span class="field-value">{{ dados.nome }}</span></div>
+        </div>
+
+        <div class="footer-stamp">
+            <p class="authority">AUTORIDADE CERTIFICADORA DO SERPRO</p>
+            <p class="timestamp">Validado em: {{ dados.data_hora }}</p>
+        </div>
+    </div>
+</div>
+</body>
+</html>
