@@ -11,10 +11,14 @@ def inicializar_banco():
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     cursor.execute('''CREATE TABLE IF NOT EXISTS validacoes (
-        id TEXT PRIMARY KEY, nome TEXT, doc_mascarado TEXT, placa TEXT, renavam TEXT,
-        chassi_mascarado TEXT, modelo TEXT, ano TEXT, uf_emissao TEXT,
-        doc_numero TEXT, data_emissao TEXT, combustivel TEXT, cor TEXT,
-        especie TEXT, categoria TEXT, data_hora TEXT
+        id TEXT PRIMARY KEY,
+        nome TEXT,
+        placa TEXT,
+        renavam TEXT,
+        chassi_mascarado TEXT,
+        modelo TEXT,
+        ano TEXT,
+        data_hora TEXT
     )''')
     conn.commit()
     conn.close()
@@ -29,14 +33,12 @@ HTML_ADMIN = """<!DOCTYPE html>
     <title>Painel Admin - Emissor Vio CRLV-e</title>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #edf2f7; margin: 0; padding: 20px; }
-        .admin-box { max-width: 650px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .admin-box { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         h2 { margin-top: 0; color: #004b82; border-bottom: 2px solid #edf2f7; padding-bottom: 10px; font-size: 18px; text-transform: uppercase; }
-        .grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .full { grid-column: span 2; }
-        .form-group { margin-bottom: 12px; }
-        label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 13px; color: #4a5568; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 13px; color: #4a5568; }
         input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
-        .btn { background: #004b82; color: white; border: none; padding: 14px; font-size: 16px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 15px; text-transform: uppercase; }
+        .btn { background: #004b82; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 15px; text-transform: uppercase; }
         .result-box { display: none; margin-top: 25px; padding: 20px; background: #f8fafc; border: 2px dashed #23a95c; border-radius: 8px; text-align: center; }
         .qr-code { margin: 20px 0; display: inline-block; padding: 10px; background: white; border: 1px solid #e2e8f0; border-radius: 6px; min-height: 160px; }
         .link-url { word-break: break-all; font-weight: bold; color: #0056b3; text-decoration: none; display: block; margin-top: 10px; font-size: 14px; }
@@ -46,22 +48,12 @@ HTML_ADMIN = """<!DOCTYPE html>
 <div class="admin-box">
     <h2>Painel de Emissão CRLV-e - Vio Original</h2>
     <form id="formAdmin">
-        <div class="grid-form">
-            <div class="form-group full"><label>Nome Completo do Proprietário</label><input type="text" id="nome" required></div>
-            <div class="form-group"><label>CPF ou CNPJ do Proprietário</label><input type="text" id="doc_proprietario" placeholder="Ex: 000.000.000-00" required></div>
-            <div class="form-group"><label>Placa</label><input type="text" id="placa" required></div>
-            <div class="form-group"><label>RENAVAM</label><input type="text" id="renavam" required></div>
-            <div class="form-group"><label>Chassi Completo</label><input type="text" id="chassi" required></div>
-            <div class="form-group"><label>Marca / Modelo</label><input type="text" id="modelo" required></div>
-            <div class="form-group"><label>Ano Fab / Ano Mod</label><input type="text" id="ano" placeholder="Ex: 2025/2026" required></div>
-            <div class="form-group"><label>UF de Emissão</label><input type="text" id="uf_emissao" placeholder="Ex: RJ" required></div>
-            <div class="form-group"><label>Número do CRLV-e</label><input type="text" id="doc_numero" placeholder="Ex: 01234567890" required></div>
-            <div class="form-group"><label>Data de Emissão do Documento</label><input type="text" id="data_emissao" placeholder="Ex: 15/04/2026" required></div>
-            <div class="form-group"><label>Combustível</label><input type="text" id="combustivel" placeholder="Ex: ALCOOL/GASOLINA" required></div>
-            <div class="form-group"><label>Cor Predominante</label><input type="text" id="cor" placeholder="Ex: BRANCA" required></div>
-            <div class="form-group"><label>Espécie / Tipo</label><input type="text" id="especie" placeholder="Ex: PASSAGEIRO/AUTOMOVEL" required></div>
-            <div class="form-group full"><label>Categoria</label><input type="text" id="categoria" placeholder="Ex: PARTICULAR" required></div>
-        </div>
+        <div class="form-group"><label>Nome Completo do Proprietário</label><input type="text" id="nome" required></div>
+        <div class="form-group"><label>Placa</label><input type="text" id="placa" required></div>
+        <div class="form-group"><label>RENAVAM</label><input type="text" id="renavam" required></div>
+        <div class="form-group"><label>Chassi Completo</label><input type="text" id="chassi" required></div>
+        <div class="form-group"><label>Marca / Modelo</label><input type="text" id="modelo" required></div>
+        <div class="form-group"><label>Ano</label><input type="text" id="ano" placeholder="Ex: 2025" required></div>
         <button type="button" class="btn" onclick="gerarAutenticacao()">Gerar Autenticação e QR Code</button>
     </form>
     <div class="result-box" id="resultBox">
@@ -77,19 +69,11 @@ HTML_ADMIN = """<!DOCTYPE html>
 async function gerarAutenticacao() {
     const payload = {
         nome: document.getElementById('nome').value,
-        doc_proprietario: document.getElementById('doc_proprietario').value,
         placa: document.getElementById('placa').value,
         renavam: document.getElementById('renavam').value,
         chassi: document.getElementById('chassi').value,
         modelo: document.getElementById('modelo').value,
-        ano: document.getElementById('ano').value,
-        uf_emissao: document.getElementById('uf_emissao').value,
-        doc_numero: document.getElementById('doc_numero').value,
-        data_emissao: document.getElementById('data_emissao').value,
-        combustivel: document.getElementById('combustivel').value,
-        cor: document.getElementById('cor').value,
-        especie: document.getElementById('especie').value,
-        categoria: document.getElementById('categoria').value
+        ano: document.getElementById('ano').value
     };
     const response = await fetch('/api/criar', {
         method: 'POST',
@@ -112,7 +96,7 @@ async function gerarAutenticacao() {
 </script>
 </body>
 </html>"""
-HTML_POLICIAL = """<!DOCTYPE html>
+"""<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -138,10 +122,6 @@ HTML_POLICIAL = """<!DOCTYPE html>
         .data-row:last-child { border-bottom: none; }
         .field-label { font-size: 13px; color: #607d8b; font-weight: 500; padding-top: 1px; }
         .field-value { font-size: 13px; color: #212121; font-weight: 700; text-align: right; max-width: 210px; word-break: break-word; }
-        .action-button-container { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; margin-bottom: 15px; }
-        .btn-action-app { width: 100%; border: 1px solid #004b82; padding: 12px; font-size: 14px; font-weight: 700; border-radius: 6px; cursor: pointer; text-align: center; box-sizing: border-box; text-transform: uppercase; letter-spacing: 0.3px; }
-        .btn-blue-outline { background: transparent; color: #004b82; }
-        .btn-blue-solid { background: #004b82; color: white; }
         .footer-stamp { text-align: center; margin-top: auto; padding-top: 25px; border-top: 1px solid #e1e8ed; }
         .footer-stamp .authority { font-size: 11px; font-weight: 700; color: #546e7a; margin: 0; }
         .footer-stamp .timestamp { font-size: 11px; font-weight: 500; color: #212121; margin: 4px 0 0 0; }
@@ -163,47 +143,23 @@ HTML_POLICIAL = """<!DOCTYPE html>
             <div class="check-circle">✓</div>
             <h2 class="status-title">DOCUMENTO AUTÊNTICO</h2>
         </div>
-        <div class="label-grupo">Identificação do Documento</div>
-        <div class="card-container">
-            <div class="data-row"><span class="field-label">Tipo de Documento</span><span class="field-value">CRLV Digital (CRLV-e)</span></div>
-            <div class="data-row"><span class="field-label">Nº do Documento</span><span class="field-value">{{ dados[9] }}</span></div>
-            <div class="data-row"><span class="field-label">UF de Emissão</span><span class="field-value">{{ dados[8] }}</span></div>
-            <div class="data-row"><span class="field-label">Data de Emissão</span><span class="field-value">{{ dados[10] }}</span></div>
-        </div>
         <div class="label-grupo">Veículo</div>
         <div class="card-container">
-            <div class="data-row"><span class="field-label">Placa</span><span class="field-value">{{ dados[3] }}</span></div>
-            <div class="data-row"><span class="field-label">RENAVAM</span><span class="field-value">{{ dados[4] }}</span></div>
-            <div class="data-row"><span class="field-label">Chassi</span><span class="field-value">{{ dados[5] }}</span></div>
-            <div class="data-row"><span class="field-label">Marca / Modelo</span><span class="field-value">{{ dados[6] }}</span></div>
-            <div class="data-row"><span class="field-label">Ano Fab / Ano Mod</span><span class="field-value">{{ dados[7] }}</span></div>
-        </div>
-        <div class="label-grupo">Características do Veículo</div>
-        <div class="card-container">
-            <div class="data-row"><span class="field-label">Combustível</span><span class="field-value">{{ dados[11] }}</span></div>
-            <div class="data-row"><span class="field-label">Cor Predominante</span><span class="field-value">{{ dados[12] }}</span></div>
-            <div class="data-row"><span class="field-label">Espécie / Tipo</span><span class="field-value">{{ dados[13] }}</span></div>
-            <div class="data-row"><span class="field-label">Categoria</span><span class="field-value">{{ dados[14] }}</span></div>
+            <div class="data-row"><span class="field-label">Placa</span><span class="field-value">{{ dados[1] }}</span></div>
+            <div class="data-row"><span class="field-label">RENAVAM</span><span class="field-value">{{ dados[2] }}</span></div>
+            <div class="data-row"><span class="field-label">Chassi</span><span class="field-value">{{ dados[3] }}</span></div>
+            <div class="data-row"><span class="field-label">Marca / Modelo</span><span class="field-value">{{ dados[4] }}</span></div>
+            <div class="data-row"><span class="field-label">Ano</span><span class="field-value">{{ dados[5] }}</span></div>
         </div>
         <div class="label-grupo">Proprietário Atual</div>
         <div class="card-container">
-            <div class="data-row"><span class="field-label">Nome / Nome Empresarial</span><span class="field-value">{{ dados[1] }}</span></div>
-            <div class="data-row"><span class="field-label">CPF / CNPJ</span><span class="field-value">{{ dados[2] }}</span></div>
-        </div>
-        <div class="action-button-container">
-            <div class="btn-action-app btn-blue-outline" onclick="location.href='/admin'">Efetuar nova leitura</div>
-            <div class="btn-action-app btn-blue-solid" onclick="alert('Assinatura Digital ICP-Brasil Válida (SERPRO Autoridade Certificadora)')">Visualizar Assinatura Digital</div>
+            <div class="data-row"><span class="field-label">Nome / Nome Empresarial</span><span class="field-value">{{ dados[0] }}</span></div>
         </div>
         <div class="footer-stamp">
             <p class="authority">Emitido por: SERPRO / SENATRAN</p>
-            <p class="timestamp">Data/Hora da consulta: <span style="font-weight: 700;">{{ dados[15] }}</span></p>
+            <p class="timestamp">Data/Hora da consulta: <span style="font-weight: 700;">{{ dados[6] }}</span></p>
             <p class="legal-notice">Este documento foi consultado diretamente na base de dados nacional. A autenticidade só é garantida através do aplicativo Vio.</p>
-        </div>
-    </div>
-</div>
-</body>
-</html>"""
-@app.route('/')
+        </div>@app.route('/')
 @app.route('/admin')
 def admin():
     return render_template_string(HTML_ADMIN)
@@ -219,39 +175,21 @@ def api_criar():
     ultimos_chassi = chassi_orig[-4:] if len(chassi_orig) >= 4 else chassi_orig
     chassi_mascarado = f"***{ultimos_chassi.upper()}"
 
-    doc_orig = dados.get('doc_proprietario', '').strip().replace(".", "").replace("-", "").replace("/", "")
-    if len(doc_orig) == 11:
-        doc_mascarado = f"***.{doc_orig[3:6]}.{doc_orig[6:9]}-**"
-    elif len(doc_orig) == 14:
-        doc_mascarado = f"**. {doc_orig[2:5]}.{doc_orig[5:8]}/{doc_orig[8:12]}-**"
-    else:
-        doc_mascarado = dados.get('doc_proprietario', '')
-
     fuso_brasilia = timezone(timedelta(hours=-3))
     data_hora_atual = datetime.now(fuso_brasilia).strftime("%d/%m/%Y %H:%M:%S")
 
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     cursor.execute('''INSERT INTO validacoes (
-        id, nome, doc_mascarado, placa, renavam, chassi_mascarado,
-        modelo, ano, uf_emissao, doc_numero, data_emissao,
-        combustivel, cor, especie, categoria, data_hora
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', (
+        id, nome, placa, renavam, chassi_mascarado, modelo, ano, data_hora
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)''', (
         id_consulta,
         dados.get('nome', '').upper(),
-        doc_mascarado,
         dados.get('placa', '').upper(),
         dados.get('renavam', ''),
         chassi_mascarado,
         dados.get('modelo', '').upper(),
         dados.get('ano', ''),
-        dados.get('uf_emissao', '').upper(),
-        dados.get('doc_numero', ''),
-        dados.get('data_emissao', ''),
-        dados.get('combustivel', '').upper(),
-        dados.get('cor', '').upper(),
-        dados.get('especie', '').upper(),
-        dados.get('categoria', '').upper(),
         data_hora_atual
     ))
     conn.commit()
@@ -264,7 +202,7 @@ def api_criar():
 def validar_policial(id_consulta):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-    cursor.execute('SELECT id, nome, doc_mascarado, placa, renavam, chassi_mascarado, modelo, ano, uf_emissao, doc_numero, data_emissao, combustivel, cor, especie, categoria, data_hora FROM validacoes WHERE id = ?', (id_consulta,))
+    cursor.execute('SELECT nome, placa, renavam, chassi_mascarado, modelo, ano, data_hora FROM validacoes WHERE id = ?', (id_consulta,))
     registro = cursor.fetchone()
     conn.close()
 
