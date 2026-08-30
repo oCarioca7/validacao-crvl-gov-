@@ -102,7 +102,7 @@ HTML_INTERFACE = """
         const btn = document.getElementById('btnProcessar');
         const btnPdf = document.getElementById('btnPdf');
         
-        if (input.files && input.files[0]) {
+        if (input.files && input.files) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 preview.src = e.target.result;
@@ -114,7 +114,7 @@ HTML_INTERFACE = """
                 const inputs = document.querySelectorAll('#adminForm input[type="text"]');
                 inputs.forEach(inp => inp.value = '');
             }
-            reader.readAsDataURL(input.files[0]);
+            reader.readAsDataURL(input.files);
         }
     }
 
@@ -124,10 +124,10 @@ HTML_INTERFACE = """
         const btnPdf = document.getElementById('btnPdf');
         const loading = document.getElementById('loadingText');
         
-        if (!fileInput.files || !fileInput.files[0]) return;
+        if (!fileInput.files || !fileInput.files) return;
 
         const formData = new FormData();
-        formData.append('schema_image', fileInput.files[0]);
+        formData.append('schema_image', fileInput.files);
 
         btn.disabled = true;
         loading.style.display = 'block';
@@ -215,14 +215,14 @@ def analisar_imagem():
 def gerar_pdf():
     try:
         from reportlab.lib.pagesizes import letter
-        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, HRFlowable
         from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
         from reportlab.lib import colors
     except ImportError:
         return "Erro: Biblioteca reportlab não está instalada no servidor.", 500
 
     pdf_buffer = io.BytesIO()
-    doc = SimpleDocTemplate(pdf_buffer, pagesize=letter, rightMargin=36, leftMargin=36, topMargin=36, bottomMargin=36)
+    doc = SimpleDocTemplate(pdf_buffer, pagesize=letter, rightMargin=54, leftMargin=54, topMargin=54, bottomMargin=54)
     story = []
     
     styles = getSampleStyleSheet()
@@ -231,3 +231,4 @@ def gerar_pdf():
         'TitleStyle',
         parent=styles['Heading1'],
         fontName='Helvetica-Bold',
+        fontSize=15,
