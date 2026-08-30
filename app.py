@@ -11,22 +11,10 @@ def inicializar_banco():
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     cursor.execute('''CREATE TABLE IF NOT EXISTS validacoes (
-        id TEXT PRIMARY KEY,
-        nome TEXT,
-        doc_mascarado TEXT,
-        placa TEXT,
-        renavam TEXT,
-        chassi_mascarado TEXT,
-        modelo TEXT,
-        ano TEXT,
-        uf_emissao TEXT,
-        doc_numero TEXT,
-        data_emissao TEXT,
-        combustivel TEXT,
-        cor TEXT,
-        especie TEXT,
-        categoria TEXT,
-        data_hora TEXT
+        id TEXT PRIMARY KEY, nome TEXT, doc_mascarado TEXT, placa TEXT, renavam TEXT,
+        chassi_mascarado TEXT, modelo TEXT, ano TEXT, uf_emissao TEXT,
+        doc_numero TEXT, data_emissao TEXT, combustivel TEXT, cor TEXT,
+        especie TEXT, categoria TEXT, data_hora TEXT
     )''')
     conn.commit()
     conn.close()
@@ -46,7 +34,7 @@ HTML_ADMIN = """<!DOCTYPE html>
         .grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .full { grid-column: span 2; }
         .form-group { margin-bottom: 12px; }
-        label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 13px; color: #4a5568; }
+        label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 13px; color: #4a5568; }
         input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
         .btn { background: #004b82; color: white; border: none; padding: 14px; font-size: 16px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 15px; text-transform: uppercase; }
         .result-box { display: none; margin-top: 25px; padding: 20px; background: #f8fafc; border: 2px dashed #23a95c; border-radius: 8px; text-align: center; }
@@ -215,13 +203,68 @@ HTML_POLICIAL = """<!DOCTYPE html>
 </div>
 </body>
 </html>"""
-return jsonify({"id": id_consulta, "url_validacao": url_completa})
+@app.route('/')
+@app.route('/admin')
+def admin():
+    return render_template_string(HTML_ADMIN)
+
+@app.route('/api/criar', methods=['POST'])
+def api_criar():
+    dados = request.json
+    if not dados:
+        return jsonify({"error": "Dados inválidos"}), 400
+
+    id_consulta = str(uuid.uuid4())[:8]
+    chassi_orig = dados.get('chassi', '').strip()
+    ultimos_chassi = chassi_orig[-4:] if len(chassi_orig) >= 4 else chassi_orig
+    chassi_mascarado = f"***{ultimos_chassi.upper()}"
+
+    doc_orig = dados.get('doc_proprietario', '').strip().replace(".", "").replace("-", "").replace("/", "")
+    if len(doc_orig) == 11:
+        doc_mascarado = f"***.{doc_orig[3:6]}.{doc_orig[6:9]}-**"
+    elif len(doc_orig) == 14:
+        doc_mascarado = f"**. {doc_orig[2:5]}.{doc_orig[5:8]}/{doc_orig[8:12]}-**"
+    else:
+        doc_mascarado = dados.get('doc_proprietario', '')
+
+    fuso_brasilia = timezone(timedelta(hours=-3))
+    data_hora_atual = datetime.now(fuso_brasilia).strftime("%d/%m/%Y %H:%M:%S")
+
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute('''INSERT INTO validacoes (
+        id, nome, doc_mascarado, placa, renavam, chassi_mascarado,
+        modelo, ano, uf_emissao, doc_numero, data_emissao,
+        combustivel, cor, especie, categoria, data_hora
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', (
+        id_consulta,
+        dados.get('nome', '').upper(),
+        doc_mascarado,
+        dados.get('placa', '').upper(),
+        dados.get('renavam', ''),
+        chassi_mascarado,
+        dados.get('modelo', '').upper(),
+        dados.get('ano', ''),
+        dados.get('uf_emissao', '').upper(),
+        dados.get('doc_numero', ''),
+        dados.get('data_emissao', ''),
+        dados.get('combustivel', '').upper(),
+        dados.get('cor', '').upper(),
+        dados.get('especie', '').upper(),
+        dados.get('categoria', '').upper(),
+        data_hora_atual
+    ))
+    conn.commit()
+    conn.close()
+
+    url_completa = request.host_url.rstrip('/') + url_for('validar_policial', id_consulta=id_consulta)
+    return jsonify({"id": id_consulta, "url_validacao": url_completa})
 
 @app.route('/validar/<id_consulta>')
 def validar_policial(id_consulta):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM validacoes WHERE id = ?', (id_consulta,))
+    cursor.execute('SELECT id, nome, doc_mascarado, placa, renavam, chassi_mascarado, modelo, ano, uf_emissao, doc_numero, data_emissao, combustivel, cor, especie, categoria, data_hora FROM validacoes WHERE id = ?', (id_consulta,))
     registro = cursor.fetchone()
     conn.close()
 
@@ -229,6 +272,7 @@ def validar_policial(id_consulta):
         return "<h3>Erro 404: Registro não encontrado na base de dados nacional do SENATRAN.</h3>", 404
         
     return render_template_string(HTML_POLICIAL, dados=registro)
+
 if __name__ == "__main__":
     porta = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=porta)
