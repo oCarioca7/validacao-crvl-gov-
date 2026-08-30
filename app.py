@@ -70,7 +70,6 @@ HTML_INTERFACE = """
             label { font-size: 12px; color: #4a5568; }
         }
     </style>
-</script>
 </head>
 <body>
 
@@ -196,7 +195,7 @@ def analisar_imagem():
         img.thumbnail((1000, 1000))
         
         estrutura_exemplo = {campo: "texto" for campo in CAMPOS_ADMIN}
-        instrucao_prompt = f"Retorne estritamente um JSON limpo contendo a extração dos dados do CRVL com as seguintes chaves: {json.dumps(estrutura_exemplo)}"
+        instrucao_prompt = f"Você é um leitor de OCR especialista. Analise a imagem do CRVL anexada e extraia os dados preenchendo rigorosamente este formato JSON (retorne apenas o JSON limpo, sem marcas de markdown): {json.dumps(estrutura_exemplo, ensure_ascii=False)}"
 
         model = genai.GenerativeModel('gemini-3.6-flash')
         resposta = model.generate_content([instrucao_prompt, img])
