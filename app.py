@@ -127,7 +127,7 @@ HTML_INTERFACE = """
             const dados = await response.json();
             
             if (response.ok) {
-                // Preenche os campos dinamicamente com os dados retornados
+                            // Preenche os campos dinamicamente com os dados retornados
             if (dados) {
                 for (const [campo, valor] of Object.entries(dados)) {
                     const inputElement = document.getElementById(campo);
@@ -135,6 +135,11 @@ HTML_INTERFACE = """
                         inputElement.value = valor;
                     }
                 }
+            }
+            if (!response.ok && !dados) {
+                alert("Erro ao ler dados: " + (dados.error || "Erro desconhecido"));
+            }
+
             }
             if (!response.ok && !dados) {
                 alert("Erro ao ler dados: " + (dados.error || "Erro desconhecido"));
