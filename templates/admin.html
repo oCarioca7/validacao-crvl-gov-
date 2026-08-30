@@ -14,7 +14,7 @@
         .btn { background: #004b82; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 15px; text-transform: uppercase; }
         .btn:hover { background: #00365e; }
         .result-box { display: none; margin-top: 25px; padding: 20px; background: #f8fafc; border: 2px dashed #23a95c; border-radius: 8px; text-align: center; }
-        .qr-code { margin: 20px 0; display: inline-block; padding: 10px; background: white; border: 1px solid #e2e8f0; border-radius: 6px; }
+        .qr-code { margin: 20px 0; display: inline-block; padding: 10px; background: white; border: 1px solid #e2e8f0; border-radius: 6px; min-height: 160px; }
         .link-url { word-break: break-all; font-weight: bold; color: #0056b3; text-decoration: none; display: block; margin-top: 10px; font-size: 14px; }
     </style>
 </head>
@@ -39,7 +39,8 @@
     </div>
 </div>
 
-<script src="https://jsdelivr.net"></script>
+<!-- CDN direto do QRCode.js via cdnjs -->
+<script src="https://cloudflare.com"></script>
 <script>
 async function gerarAutenticacao() {
     const payload = {
@@ -58,12 +59,14 @@ async function gerarAutenticacao() {
             body: JSON.stringify(payload)
         });
         const data = await response.json();
-        if (response.ok) {
+        
+        if (response.ok && data.url_validacao) {
             document.getElementById('linkPolicial').href = data.url_validacao;
             document.getElementById('linkPolicial').innerText = data.url_validacao;
             
             const qrContainer = document.getElementById('qrContainer');
             qrContainer.innerHTML = "";
+            
             new QRCode(qrContainer, {
                 text: data.url_validacao,
                 width: 160,
@@ -72,10 +75,11 @@ async function gerarAutenticacao() {
 
             document.getElementById('resultBox').style.display = 'block';
         } else {
-            alert('Erro ao processar dados.');
+            alert('Erro ao processar dados no servidor.');
         }
-    } catch(err) {
-        alert('Erro ao conectar ao servidor.');
+    } catch (err) {
+        console.error(err);
+        alert('Erro ao enviar dados para a API: ' + err.message);
     }
 }
 </script>
