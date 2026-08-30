@@ -10,21 +10,30 @@ DB_FILE = "base_vio_nacional.db"
 def inicializar_banco():
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS validacoes (
-            id TEXT PRIMARY KEY, nome TEXT, doc_mascarado TEXT, placa TEXT, renavam TEXT,
-            chassi_mascarado TEXT, modelo TEXT, ano TEXT, uf_emissao TEXT,
-            doc_numero TEXT, data_emissao TEXT, combustivel TEXT, cor TEXT,
-            especie TEXT, categoria TEXT, data_hora TEXT
-        )
-    ''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS validacoes (
+        id TEXT PRIMARY KEY,
+        nome TEXT,
+        doc_mascarado TEXT,
+        placa TEXT,
+        renavam TEXT,
+        chassi_mascarado TEXT,
+        modelo TEXT,
+        ano TEXT,
+        uf_emissao TEXT,
+        doc_numero TEXT,
+        data_emissao TEXT,
+        combustivel TEXT,
+        cor TEXT,
+        especie TEXT,
+        categoria TEXT,
+        data_hora TEXT
+    )''')
     conn.commit()
     conn.close()
 
 inicializar_banco()
 
-HTML_ADMIN = """
-<!DOCTYPE html>
+HTML_ADMIN = """<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -37,7 +46,7 @@ HTML_ADMIN = """
         .grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .full { grid-column: span 2; }
         .form-group { margin-bottom: 12px; }
-        label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 13px; color: #4a5568; }
+        label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 13px; color: #4a5568; }
         input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
         .btn { background: #004b82; color: white; border: none; padding: 14px; font-size: 16px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 15px; text-transform: uppercase; }
         .result-box { display: none; margin-top: 25px; padding: 20px; background: #f8fafc; border: 2px dashed #23a95c; border-radius: 8px; text-align: center; }
@@ -69,55 +78,53 @@ HTML_ADMIN = """
     </form>
     <div class="result-box" id="resultBox">
         <h3 style="color: #23a95c; margin-top: 0;">✓ Registro Criado na Base Nacional!</h3>
-        <p style="font-size: 14px;">Abaixo está o QR Code para você colocar no documento:</p>
+        <p style="font-size: 14px; margin: 0;">Abaixo está o QR Code para você colocar no documento do veículo:</p>
         <div class="qr-code" id="qrContainer"></div>
-        <p style="font-size: 14px;">Link direto da tela de validação do policial:</p>
+        <p style="font-size: 14px; margin: 0;">Link direto de fiscalização (Tela do Policial):</p>
         <a id="linkPolicial" class="link-url" target="_blank" href="#">Carregando...</a>
     </div>
 </div>
 <script src="https://unpkg.com"></script>
 <script>
-    async function gerarAutenticacao() {
-        const payload = {
-            nome: document.getElementById('nome').value,
-            doc_proprietario: document.getElementById('doc_proprietario').value,
-            placa: document.getElementById('placa').value,
-            renavam: document.getElementById('renavam').value,
-            chassi: document.getElementById('chassi').value,
-            modelo: document.getElementById('modelo').value,
-            ano: document.getElementById('ano').value,
-            uf_emissao: document.getElementById('uf_emissao').value,
-            doc_numero: document.getElementById('doc_numero').value,
-            data_emissao: document.getElementById('data_emissao').value,
-            combustivel: document.getElementById('combustivel').value,
-            cor: document.getElementById('cor').value,
-            especie: document.getElementById('especie').value,
-            categoria: document.getElementById('categoria').value
-        };
-        const response = await fetch('/api/criar', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
-        });
-        const data = await response.json();
-        if(response.ok) {
-            document.getElementById('linkPolicial').href = data.url_validacao;
-            document.getElementById('linkPolicial').innerText = data.url_validacao;
-            var qr = qrcode(4, 'L');
-            qr.addData(data.url_validacao);
-            qr.make();
-            document.getElementById('qrContainer').innerHTML = qr.createImgTag(4);
-            document.getElementById('resultBox').style.display = 'block';
-        } else {
-            alert('Erro ao processar dados.');
-        }
+async function gerarAutenticacao() {
+    const payload = {
+        nome: document.getElementById('nome').value,
+        doc_proprietario: document.getElementById('doc_proprietario').value,
+        placa: document.getElementById('placa').value,
+        renavam: document.getElementById('renavam').value,
+        chassi: document.getElementById('chassi').value,
+        modelo: document.getElementById('modelo').value,
+        ano: document.getElementById('ano').value,
+        uf_emissao: document.getElementById('uf_emissao').value,
+        doc_numero: document.getElementById('doc_numero').value,
+        data_emissao: document.getElementById('data_emissao').value,
+        combustivel: document.getElementById('combustivel').value,
+        cor: document.getElementById('cor').value,
+        especie: document.getElementById('especie').value,
+        categoria: document.getElementById('categoria').value
+    };
+    const response = await fetch('/api/criar', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+    });
+    const data = await response.json();
+    if(response.ok) {
+        document.getElementById('linkPolicial').href = data.url_validacao;
+        document.getElementById('linkPolicial').innerText = data.url_validacao;
+        var qr = qrcode(4, 'L');
+        qr.addData(data.url_validacao);
+        qr.make();
+        document.getElementById('qrContainer').innerHTML = qr.createImgTag(4);
+        document.getElementById('resultBox').style.display = 'block';
+    } else {
+        alert('Erro ao processar dados.');
     }
+}
 </script>
 </body>
-</html>
-"""
-HTML_POLICIAL = """
-<!DOCTYPE html>
+</html>"""
+HTML_POLICIAL = """<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -168,7 +175,6 @@ HTML_POLICIAL = """
             <div class="check-circle">✓</div>
             <h2 class="status-title">DOCUMENTO AUTÊNTICO</h2>
         </div>
-"""
         <div class="label-grupo">Identificação do Documento</div>
         <div class="card-container">
             <div class="data-row"><span class="field-label">Tipo de Documento</span><span class="field-value">CRLV Digital (CRLV-e)</span></div>
@@ -178,11 +184,11 @@ HTML_POLICIAL = """
         </div>
         <div class="label-grupo">Veículo</div>
         <div class="card-container">
-            <div class="data-row"><span class="field-label">Placa</span><span class="field-value">{{ dados[2] }}</span></div>
-            <div class="data-row"><span class="field-label">RENAVAM</span><span class="field-value">{{ dados[3] }}</span></div>
-            <div class="data-row"><span class="field-label">Chassi</span><span class="field-value">{{ dados[4] }}</span></div>
-            <div class="data-row"><span class="field-label">Marca / Modelo</span><span class="field-value">{{ dados[5] }}</span></div>
-            <div class="data-row"><span class="field-label">Ano Fab / Ano Mod</span><span class="field-value">{{ dados[6] }}</span></div>
+            <div class="data-row"><span class="field-label">Placa</span><span class="field-value">{{ dados[3] }}</span></div>
+            <div class="data-row"><span class="field-label">RENAVAM</span><span class="field-value">{{ dados[4] }}</span></div>
+            <div class="data-row"><span class="field-label">Chassi</span><span class="field-value">{{ dados[5] }}</span></div>
+            <div class="data-row"><span class="field-label">Marca / Modelo</span><span class="field-value">{{ dados[6] }}</span></div>
+            <div class="data-row"><span class="field-label">Ano Fab / Ano Mod</span><span class="field-value">{{ dados[7] }}</span></div>
         </div>
         <div class="label-grupo">Características do Veículo</div>
         <div class="card-container">
@@ -193,8 +199,8 @@ HTML_POLICIAL = """
         </div>
         <div class="label-grupo">Proprietário Atual</div>
         <div class="card-container">
-            <div class="data-row"><span class="field-label">Nome / Nome Empresarial</span><span class="field-value">{{ dados[0] }}</span></div>
-            <div class="data-row"><span class="field-label">CPF / CNPJ</span><span class="field-value">{{ dados[1] }}</span></div>
+            <div class="data-row"><span class="field-label">Nome / Nome Empresarial</span><span class="field-value">{{ dados[1] }}</span></div>
+            <div class="data-row"><span class="field-label">CPF / CNPJ</span><span class="field-value">{{ dados[2] }}</span></div>
         </div>
         <div class="action-button-container">
             <div class="btn-action-app btn-blue-outline" onclick="location.href='/admin'">Efetuar nova leitura</div>
@@ -208,53 +214,20 @@ HTML_POLICIAL = """
     </div>
 </div>
 </body>
-</html>
-"""
-@app.route('/')
-@app.route('/admin')
-def admin():
-    return render_template_string(HTML_ADMIN)
-
-@app.route('/api/criar', methods=['POST'])
-def api_criar():
-    dados = request.json
-    if not dados: return jsonify({"error": "Dados inválidos"}), 400
-    id_consulta = str(uuid.uuid4())[:8]
-    chassi_orig = dados.get('chassi', '').strip()
-    ultimos_chassi = chassi_orig[-4:] if len(chassi_orig) >= 4 else chassi_orig
-    chassi_mascarado = f"***{ultimos_chassi.upper()}"
-    doc_orig = dados.get('doc_proprietario', '').strip().replace(".", "").replace("-", "").replace("/", "")
-    if len(doc_orig) == 11: doc_mascarado = f"***.{doc_orig[3:6]}.{doc_orig[6:9]}-**"
-    elif len(doc_orig) == 14: doc_mascarado = f"**. {doc_orig[2:5]}.{doc_orig[5:8]}/{doc_orig[8:12]}-**"
-    else: doc_mascarado = dados.get('doc_proprietario', '')
-    fuso_brasilia = timezone(timedelta(hours=-3))
-    data_hora_atual = datetime.now(fuso_brasilia).strftime("%d/%m/%Y %H:%M:%S")
-
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute('''
-        INSERT INTO validacoes (id, nome, doc_mascarado, placa, renavam, chassi_mascarado, modelo, ano, uf_emissao, doc_numero, data_emissao, combustivel, cor, especie, categoria, data_hora)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (
-        id_consulta, dados.get('nome', '').upper(), doc_mascarado, dados.get('placa', '').upper(),
-        dados.get('renavam', ''), chassi_mascarado, dados.get('modelo', '').upper(), dados.get('ano', ''),
-        dados.get('uf_emissao', '').upper(), dados.get('doc_numero', ''), dados.get('data_emissao', ''),
-        dados.get('combustivel', '').upper(), dados.get('cor', '').upper(), dados.get('especie', '').upper(),
-        dados.get('categoria', '').upper(), data_hora_atual
-    ))
-    conn.commit()
-    conn.close()
-    url_completa = request.host_url.rstrip('/') + url_for('validar_policial', id_consulta=id_consulta)
+</html>"""
     return jsonify({"id": id_consulta, "url_validacao": url_completa})
 
 @app.route('/validar/<id_consulta>')
 def validar_policial(id_consulta):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-    cursor.execute('SELECT nome, doc_mascarado, placa, renavam, chassi_mascarado, modelo, ano, uf_emissao, doc_numero, data_emissao, combustivel, cor, especie, categoria, data_hora FROM validacoes WHERE id = ?', (id_consulta,))
+    cursor.execute('SELECT * FROM validacoes WHERE id = ?', (id_consulta,))
     registro = cursor.fetchone()
     conn.close()
-    if not registro: return "<h3>Erro 404: Registro não encontrado na base de dados nacional do SENATRAN.</h3>", 404
+
+    if not registro:
+        return "<h3>Erro 404: Registro não encontrado na base de dados nacional do SENATRAN.</h3>", 404
+        
     return render_template_string(HTML_POLICIAL, dados=registro)
 
 if __name__ == "__main__":
