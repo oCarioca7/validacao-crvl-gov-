@@ -14,7 +14,7 @@
         .btn { background: #004b82; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 15px; text-transform: uppercase; }
         .btn:hover { background: #00365e; }
         .result-box { display: none; margin-top: 25px; padding: 20px; background: #f8fafc; border: 2px dashed #23a95c; border-radius: 8px; text-align: center; }
-        .qr-code { margin: 20px 0; display: inline-block; padding: 10px; background: white; border: 1px solid #e2e8f0; border-radius: 6px; min-height: 160px; }
+        .qr-code { margin: 20px 0; display: inline-block; padding: 10px; background: white; border: 1px solid #e2e8f0; border-radius: 6px; }
         .link-url { word-break: break-all; font-weight: bold; color: #0056b3; text-decoration: none; display: block; margin-top: 10px; font-size: 14px; }
     </style>
 </head>
@@ -33,14 +33,14 @@
     <div class="result-box" id="resultBox">
         <h3 style="color: #23a95c; margin-top: 0;">✓ Registro Criado na Base Nacional!</h3>
         <p style="font-size: 14px; margin: 0;">Abaixo está o QR Code para você colocar no documento do veículo:</p>
-        <div class="qr-code" id="qrContainer"></div>
+        <div class="qr-code">
+            <img id="qrImg" src="" alt="QR Code" width="180" height="180" style="display:none;" />
+        </div>
         <p style="font-size: 14px; margin: 0;">Link direto de fiscalização (Tela do Policial):</p>
         <a id="linkPolicial" class="link-url" target="_blank" href="#">Carregando...</a>
     </div>
 </div>
 
-<!-- CDN direto do QRCode.js via cdnjs -->
-<script src="https://cloudflare.com"></script>
 <script>
 async function gerarAutenticacao() {
     const payload = {
@@ -64,22 +64,16 @@ async function gerarAutenticacao() {
             document.getElementById('linkPolicial').href = data.url_validacao;
             document.getElementById('linkPolicial').innerText = data.url_validacao;
             
-            const qrContainer = document.getElementById('qrContainer');
-            qrContainer.innerHTML = "";
-            
-            new QRCode(qrContainer, {
-                text: data.url_validacao,
-                width: 160,
-                height: 160
-            });
+            const qrImg = document.getElementById('qrImg');
+            qrImg.src = 'https://qrserver.com' + encodeURIComponent(data.url_validacao);
+            qrImg.style.display = 'inline-block';
 
             document.getElementById('resultBox').style.display = 'block';
         } else {
             alert('Erro ao processar dados no servidor.');
         }
     } catch (err) {
-        console.error(err);
-        alert('Erro ao enviar dados para a API: ' + err.message);
+        alert('Erro de comunicação: ' + err.message);
     }
 }
 </script>
