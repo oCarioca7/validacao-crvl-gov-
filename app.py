@@ -67,7 +67,6 @@ HTML_ADMIN = """
         <a id="linkPolicial" class="link-url" target="_blank" href="#">Carregando...</a>
     </div>
 </div>
-<!-- Gerador de QR Code Embutido com Biblioteca Estável e Autônoma -->
 <script src="https://unpkg.com"></script>
 <script>
     async function gerarAutenticacao() {
@@ -88,8 +87,6 @@ HTML_ADMIN = """
         if(response.ok) {
             document.getElementById('linkPolicial').href = data.url_validacao;
             document.getElementById('linkPolicial').innerText = data.url_validacao;
-            
-            // Renderização do QR Code Nativamente sem falhas de rede externa
             var qr = qrcode(4, 'L');
             qr.addData(data.url_validacao);
             qr.make();
@@ -112,31 +109,21 @@ HTML_POLICIAL = """
     <title>Vio - Validação de Documentos Digitais</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f2f3f5; margin: 0; padding: 0; display: flex; justify-content: center; -webkit-font-smoothing: antialiased; }
-        
-        /* Força o enquadramento perfeito de celular mesmo visualizado em telas grandes de PC */
         .vio-wrapper { width: 100%; max-width: 440px; background: #ffffff; min-height: 100vh; box-sizing: border-box; padding: 18px 20px; display: flex; flex-direction: column; box-shadow: 0 4px 25px rgba(0,0,0,0.08); margin: 0 auto; }
-        
-        /* Cabeçalho do App Vio Oficial */
         .vio-app-header { text-align: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #e1e8ed; display: flex; flex-direction: column; align-items: center; }
         .vio-app-header .brasao-logo { width: 22px; height: 22px; background: #004b82; border-radius: 4px; margin-bottom: 6px; display: inline-block; position: relative; }
         .vio-app-header .brasao-logo::after { content: "★"; color: white; font-size: 11px; position: absolute; top: 2px; left: 5px; }
         .vio-app-header .top-gov { font-size: 11px; font-weight: 700; color: #004b82; letter-spacing: 0.8px; margin: 0; text-transform: uppercase; }
         .vio-app-header .sub-gov { font-size: 13px; font-weight: 600; color: #5c6873; margin: 3px 0 0 0; }
-        
-        /* Caixa Verde de Autenticidade do App */
-        .success-banner { background-color: #eaf7ed; border: 1.5px solid #23a95c; border-radius: 8px; padding: 12px; text-align: center; margin-bottom: 22px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .success-banner .check-circle { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; background: #23a95c; color: white; border-radius: 50%; font-size: 11px; font-weight: bold; }
+        .success-banner { background-color: #eaf7ed; border: 1px solid #23a95c; border-radius: 8px; padding: 12px; text-align: center; margin-bottom: 22px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .success-banner .check-circle { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; background: #23a95c; color: white; border-radius: 50%; font-size: 11px; font-weight: bold; }
         .success-banner .status-title { font-size: 14px; font-weight: 800; color: #23a95c; margin: 0; letter-spacing: 0.5px; }
-        
-        /* Layout de Grupos de Dados Estilo Mobile */
         .group-label { font-size: 11px; font-weight: 700; color: #657786; text-transform: uppercase; margin: 15px 0 6px 4px; letter-spacing: 0.5px; }
         .card-container { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 14px; margin-bottom: 15px; }
         .data-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f3f4; }
         .data-row:last-child { border-bottom: none; }
         .field-label { font-size: 13px; color: #657786; font-weight: 500; }
         .field-value { font-size: 13px; color: #14171a; font-weight: 700; text-align: right; }
-"""
-        /* Rodapé Oficial Legado Serpro */
         .footer-stamp { text-align: center; margin-top: auto; padding-top: 30px; }
         .footer-stamp .authority { font-size: 11px; font-weight: 700; color: #657786; margin: 0; }
         .footer-stamp .timestamp { font-size: 11px; font-weight: 500; color: #14171a; margin: 4px 0 0 0; }
@@ -144,35 +131,34 @@ HTML_POLICIAL = """
     </style>
 </head>
 <body>
-<div class="vio-wrapper">
-    <div class="vio-app-header">
-        <div class="brasao-logo"></div>
-        <p class="top-gov">SENATRAN · GOVERNO FEDERAL</p>
-        <p class="sub-gov">Ministério dos Transportes</p>
-    </div>
-    <div class="success-banner">
-        <div class="check-circle">✓</div>
-        <h2 class="status-title">DOCUMENTO AUTÊNTICO</h2>
-    </div>
-    
-    <div class="group-label">Veículo</div>
-    <div class="card-container">
-        <div class="data-row"><span class="field-label">Placa</span><span class="field-value">{{ dados[2] }}</span></div>
-        <div class="data-row"><span class="field-label">RENAVAM</span><span class="field-value">{{ dados[3] }}</span></div>
-        <div class="data-row"><span class="field-label">Chassi</span><span class="field-value">{{ dados[4] }}</span></div>
-        <div class="data-row"><span class="field-label">Marca / Modelo</span><span class="field-value">{{ dados[5] }}</span></div>
-        <div class="data-row"><span class="field-label">Ano</span><span class="field-value">{{ dados[6] }}</span></div>
-    </div>
-    
-    <div class="group-label">Proprietário Atual</div>
-    <div class="card-container">
-        <div class="data-row"><span class="field-label">Nome / Nome Empresarial</span><span class="field-value" style="text-align: left; max-width: 220px; word-break: break-word;">{{ dados[1] }}</span></div>
-    </div>
-    
-    <div class="footer-stamp">
-        <p class="authority">Emitido por: SERPRO / SENATRAN</p>
-        <p class="timestamp">Data/Hora da consulta: <span style="font-weight: 700;">{{ dados[7] }}</span></p>
-        <p class="legal-notice">Este documento foi consultado diretamente na base de dados nacional. A autenticidade só é garantida através do aplicativo Vio.</p>
+<div class="phone-wrapper">
+    <div class="vio-wrapper">
+        <div class="vio-app-header">
+            <div class="brasao-logo"></div>
+            <p class="top-gov">SENATRAN · GOVERNO FEDERAL</p>
+            <p class="sub-gov">Ministério dos Transportes</p>
+        </div>
+        <div class="success-banner">
+            <div class="check-circle">✓</div>
+            <h2 class="status-title">DOCUMENTO AUTÊNTICO</h2>
+        </div>
+        <div class="group-label">Veículo</div>
+        <div class="card-container">
+            <div class="data-row"><span class="field-label">Placa</span><span class="field-value">{{ dados[1] }}</span></div>
+            <div class="data-row"><span class="field-label">RENAVAM</span><span class="field-value">{{ dados[2] }}</span></div>
+            <div class="data-row"><span class="field-label">Chassi</span><span class="field-value">{{ dados[3] }}</span></div>
+            <div class="data-row"><span class="field-label">Marca / Modelo</span><span class="field-value">{{ dados[4] }}</span></div>
+            <div class="data-row"><span class="field-label">Ano</span><span class="field-value">{{ dados[5] }}</span></div>
+        </div>
+        <div class="group-label">Proprietário Atual</div>
+        <div class="card-container">
+            <div class="data-row"><span class="field-label">Nome / Nome Empresarial</span><span class="field-value" style="text-align: left; max-width: 220px; word-break: break-word;">{{ dados[0] }}</span></div>
+        </div>
+        <div class="footer-stamp">
+            <p class="authority">Emitido por: SERPRO / SENATRAN</p>
+            <p class="timestamp">Data/Hora da consulta: <span style="font-weight: 700;">{{ dados[6] }}</span></p>
+            <p class="legal-notice">Este documento foi consultado diretamente na base de dados nacional. A autenticidade só é garantida através do aplicativo Vio.</p>
+        </div>
     </div>
 </div>
 </body>
@@ -197,7 +183,6 @@ def api_criar():
     fuso_brasilia = timezone(timedelta(hours=-3))
     data_hora_atual = datetime.now(fuso_brasilia).strftime("%d/%m/%Y %H:%M:%S")
 
-    # Armazena fisicamente na tabela permanente do banco de dados SQLite local
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     cursor.execute('''
@@ -221,10 +206,9 @@ def api_criar():
 
 @app.route('/validar/<id_consulta>')
 def validar_policial(id_consulta):
-    # Consulta permanente na base física local do SQLite
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM validacoes WHERE id = ?', (id_consulta,))
+    cursor.execute('SELECT nome, placa, renavam, chassi_mascarado, modelo, ano, data_hora FROM validacoes WHERE id = ?', (id_consulta,))
     registro = cursor.fetchone()
     conn.close()
 
