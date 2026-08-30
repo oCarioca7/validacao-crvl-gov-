@@ -26,9 +26,8 @@ CAMPOS_ADMIN = [
     "Capacidade / Lotação"
 ]
 
-# Configuração de Segurança da API Key
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "SUA_CHAVE_LOCAL_SE_NAO_USAR_RENDER")
-if GEMINI_API_KEY and GEMINI_API_KEY != "SUA_CHAVE_LOCAL_SE_NAO_USAR_RENDER":
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
 HTML_INTERFACE = """
@@ -59,7 +58,6 @@ HTML_INTERFACE = """
         button:disabled { background: #bdc3c7 !important; cursor: not-allowed; }
         .loading { display: none; color: #2980b9; font-weight: bold; text-align: center; margin-top: 15px; font-size: 14px; }
         
-        /* Estilos de Impressão para o PDF limpo */
         @media print {
             body { background: white; color: black; padding: 0; }
             .header-app { background: #1a365d !important; color: white !important; border-radius: 0; padding: 15px; -webkit-print-color-adjust: exact; }
@@ -72,6 +70,7 @@ HTML_INTERFACE = """
             label { font-size: 12px; color: #4a5568; }
         }
     </style>
+</script>
 </head>
 <body>
 
@@ -81,7 +80,6 @@ HTML_INTERFACE = """
 </div>
 
 <div class="container">
-    <!-- ESQUERDA: ENTRADA -->
     <div class="panel">
         <h2>1. Upload do CRVL Digital</h2>
         <div class="upload-area" onclick="document.getElementById('fileInput').click()">
@@ -93,7 +91,6 @@ HTML_INTERFACE = """
         <div class="loading" id="loadingText">🤖 Extraindo dados estruturados do CRVL... Por favor, aguarde.</div>
     </div>
 
-    <!-- DIREITA: RESULTADOS -->
     <div class="panel">
         <h2>2. Dados Extraídos do Veículo</h2>
         <form id="adminForm">
@@ -162,17 +159,16 @@ HTML_INTERFACE = """
                 }
                 btnPdf.style.display = 'block';
             } else {
-                alert("Falha no processamento: " + (dados.error || "Erro na resposta da IA."));
+                alert("Falha: " + (dados.error || "Erro de resposta da IA."));
             }
         } catch (error) {
-            alert("Processamento concluído. Verifique as caixas na tela.");
+            alert("Processamento finalizado.");
         } finally {
             btn.disabled = false;
             loading.style.display = 'none';
         }
     }
 </script>
-
 </body>
 </html>
 """
@@ -190,40 +186,27 @@ def analisar_imagem():
     if arquivo.filename == '':
         return jsonify({"error": "Arquivo inválido"}), 400
 
-    if not GEMINI_API_KEY or GEMINI_API_KEY == "SUA_CHAVE_LOCAL_SE_NAO_USAR_RENDER":
-        return jsonify({"error": "API Key do Gemini não configurada."}), 500
+    if not GEMINI_API_KEY:
+        return jsonify({"error": "Chave GEMINI_API_KEY faltando no Render."}), 500
 
     try:
         img = Image.open(io.BytesIO(arquivo.read()))
         if img.mode != 'RGB':
             img = img.convert('RGB')
-        img.thumbnail((1200, 1200))
+        img.thumbnail((1000, 1000))
         
-        estrutura_exemplo = {campo: "texto extraído" for campo in CAMPOS_ADMIN}
-        
-        instrucao_prompt = f"""
-        Você é um sistema OCR especialista em documentos automotivos brasileiros.
-        Analise a imagem do CRVL enviado.
-        Extraia as informações textuais correspondentes e monte estritamente uma estrutura JSON pura:
-        {json.dumps(estrutura_exemplo, ensure_ascii=False)}
-        
-        Regras cruciais:
-        1. Responda APENAS o objeto JSON, sem blocos de código markdown ou explicações.
-        2. Chaves idênticas às solicitadas.
-        3. Caso não visualize o dado, atribua string vazia "".
-        """
+        estrutura_exemplo = {campo: "texto" for campo in CAMPOS_ADMIN}
+        instrucao_prompt = f"Retorne estritamente um JSON limpo contendo a extração dos dados do CRVL com as seguintes chaves: {json.dumps(estrutura_exemplo)}"
 
         model = genai.GenerativeModel('gemini-3.6-flash')
         resposta = model.generate_content([instrucao_prompt, img])
         
         texto_limpo = resposta.text.strip().replace("```json", "").replace("```", "")
         dados_finais = json.loads(texto_limpo)
-        
         return jsonify(dados_finais)
-
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-
-porta = int(os.environ.get("PORT", 5000))app.run(host="0.0.0.0", port=porta)
+    porta = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=porta)
