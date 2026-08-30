@@ -203,7 +203,7 @@ def analisar_imagem():
         model = genai.GenerativeModel('gemini-3.6-flash')
         resposta = model.generate_content([instrucao_prompt, img])
         
-        texto_limpo = response_text = resposta.text.strip().replace("```json", "").replace("```", "")
+        texto_limpo = resposta.text.strip().replace("```json", "").replace("```", "")
         dados_finais = json.loads(texto_limpo)
         
         return jsonify(dados_finais)
@@ -230,4 +230,4 @@ def gerar_pdf():
     title_style = ParagraphStyle(
         'TitleStyle',
         parent=styles['Heading1'],
-fontName='Helvetica-Bold',fontSize=14,leading=16,textColor=colors.HexColor('#1a365d'),alignment=1)subtitle_style = ParagraphStyle('SubTitleStyle',parent=styles['Normal'],fontName='Helvetica',fontSize=10,leading=12,textColor=colors.HexColor('#4a5568'),alignment=1)label_style = ParagraphStyle('LabelStyle',parent=styles['Normal'],fontName='Helvetica-Bold',fontSize=9,leading=11,textColor=colors.HexColor('#2d3748'))value_style = ParagraphStyle('ValueStyle',parent=styles['Normal'],fontName='Helvetica',fontSize=10,leading=12,textColor=colors.HexColor('#1a202c'))story.append(Paragraph("REPÚBLICA FEDERATIVA DO BRASIL", title_style))story.append(Paragraph("MINISTÉRIO DOS TRANSPORTES - SESTRAN / SENATRAN", subtitle_style))story.append(Paragraph("CERTIFICADO DE REGISTRO E LICENCIAMENTO DE VEÍCULO DIGITAL - CRLV-e", subtitle_style))story.append(Spacer(1, 15))table_data = []for campo in CAMPOS_ADMIN:valor = request.form.get(campo, '')p_campo = Paragraph(f"{campo}:", label_style)p_valor = Paragraph(valor if valor else "Não informado", value_style)table_data.append([p_campo, p_valor])t = Table(table_data, colWidths=[200, 340])t.setStyle(TableStyle([('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#f7fafc')),('ALIGN', (0,0), (-1,-1), 'LEFT'),('VALIGN', (0,0), (-1,-1), 'MIDDLE'),('TEXTCOLOR', (0,0), (-1,-1), colors.HexColor('#2d3748')),('BOTTOMPADDING', (0,0), (-1,-1), 8),('TOPPADDING', (0,0), (-1,-1), 8),('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),]))story.append(t)doc.build(story)pdf_buffer.seek(0)return send_file(pdf_buffer, as_attachment=True, download_name="CRVL_Digital_Preenchido.pdf", mimetype='application/pdf')if name == "main":porta = int(os.environ.get("PORT", 5000))app.run(host="0.0.0.0", port=porta)
+        fontName='Helvetica-Bold',
