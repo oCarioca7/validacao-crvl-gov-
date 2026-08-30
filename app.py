@@ -4,8 +4,6 @@ from datetime import datetime, timezone, timedelta
 from flask import Flask, request, jsonify, render_template_string, url_for
 
 app = Flask(__name__)
-
-# Banco de dados temporário em memória para salvar as validações geradas
 BANCO_DADOS = {}
 
 HTML_ADMIN = """
@@ -16,14 +14,13 @@ HTML_ADMIN = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel Admin - Gerador Vio</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 30px; color: #333; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 30px; }
         .admin-box { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         h2 { margin-top: 0; color: #1a365d; border-bottom: 2px solid #edf2f7; padding-bottom: 10px; }
         .form-group { margin-bottom: 15px; }
         label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 13px; color: #4a5568; }
         input[type="text"] { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
         .btn { background: #23a95c; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 15px; }
-        .btn:hover { background: #1e8e4d; }
         .result-box { display: none; margin-top: 25px; padding: 20px; background: #f8fafc; border: 1px dashed #23a95c; border-radius: 8px; text-align: center; }
         .qr-code { margin: 20px 0; display: inline-block; padding: 10px; background: white; border: 1px solid #e2e8f0; }
         .link-url { word-break: break-all; font-weight: bold; color: #0056b3; text-decoration: none; display: block; margin-top: 10px; }
@@ -76,7 +73,6 @@ HTML_ADMIN = """
             document.getElementById('linkPolicial').innerText = data.url_validacao;
             document.getElementById('qrContainer').innerHTML = `<img src="https://qrserver.com{encodeURIComponent(data.url_validacao)}" alt="QR Code Vio">`;
             document.getElementById('resultBox').style.display = 'block';
-            window.scrollTo(0, document.body.scrollHeight);
         } else {
             alert('Erro ao processar dados.');
         }
@@ -85,7 +81,6 @@ HTML_ADMIN = """
 </body>
 </html>
 """
-
 HTML_POLICIAL = """
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -111,7 +106,7 @@ HTML_POLICIAL = """
         .footer-stamp { text-align: center; margin-top: auto; padding-top: 30px; }
         .footer-stamp .authority { font-size: 11px; font-weight: 700; color: #657786; margin: 0; }
         .footer-stamp .timestamp { font-size: 11px; font-weight: 500; color: #14171a; margin: 4px 0 0 0; }
-        .footer-stamp .legal-notice { font-size: 10px; color: #a4b0be; line-height: 14px; margin-top: 15px; padding: 0 10px; }
+        .legal-notice { font-size: 10px; color: #a4b0be; line-height: 14px; margin-top: 15px; padding: 0 10px; }
     </style>
 </head>
 <body>
@@ -154,4 +149,46 @@ HTML_POLICIAL = """
 
 @app.route('/')
 @app.route('/admin')
-Use o código com cuidado.def admin():return render_template_string(HTML_ADMIN)@app.route('/api/criar', methods=['POST'])def api_criar():dados = request.jsonif not dados:return jsonify({"error": "Dados inválidos"}), 400id_consulta = str(uuid.uuid4())[:8]chassi_original = dados.get('chassi', '').strip()ultimos_digitos = chassi_original[-4:] if len(chassi_original) >= 4 else chassi_originalchassi_mascarado = f"***{ultimos_digitos.upper()}"fuso_brasilia = timezone(timedelta(hours=-3))data_hora_atual = datetime.now(fuso_brasilia).strftime("%d/%m/%Y %H:%M:%S")BANCO_DADOS[id_consulta] = {"nome": dados.get('nome', '').upper(),"doc_proprietario": dados.get('doc_proprietario', '') or "---","placa": dados.get('placa', '').upper(),"renavam": dados.get('renavam', ''),"chassi_mascarado": chassi_mascarado,"modelo": dados.get('modelo', '').upper(),"ano": dados.get('ano', ''),"cla_seguranca": dados.get('cla_seguranca', '') or "---","crv_numero": dados.get('crv_numero', '') or "---","data_hora": data_hora_atual}url_completa = request.host_url.rstrip('/') + url_for('validar_policial', id_consulta=id_consulta)return jsonify({"id": id_consulta, "url_validacao": url_completa})@app.route('/validar/<id_consulta>')def validar_policial(id_consulta):registro = BANCO_DADOS.get(id_consulta)if not registro:return "Erro 404: Registro de autenticação não encontrado na base do SENATRAN.", 404return render_template_string(HTML_POLICIAL, dados=registro)if name == "main":porta = int(os.environ.get("PORT", 5000))app.run(host="0.0.0.0", port=porta)
+def admin():
+    return render_template_string(HTML_ADMIN)
+
+@app.route('/api/criar', methods=['POST'])
+def api_criar():
+    dados = request.json
+    if not dados:
+        return jsonify({"error": "Dados inválidos"}), 400
+
+    id_consulta = str(uuid.uuid4())[:8]
+    chassi_original = dados.get('chassi', '').strip()
+    ultimos_digitos = chassi_original[-4:] if len(chassi_original) >= 4 else chassi_original
+    chassi_mascarado = f"***{ultimos_digitos.upper()}"
+
+    fuso_brasilia = timezone(timedelta(hours=-3))
+    data_hora_atual = datetime.now(fuso_brasilia).strftime("%d/%m/%Y %H:%M:%S")
+
+    BANCO_DADOS[id_consulta] = {
+        "nome": dados.get('nome', '').upper(),
+        "doc_proprietario": dados.get('doc_proprietario', '') or "---",
+        "placa": dados.get('placa', '').upper(),
+        "renavam": dados.get('renavam', ''),
+        "chassi_mascarado": chassi_mascarado,
+        "modelo": dados.get('modelo', '').upper(),
+        "ano": dados.get('ano', ''),
+        "cla_seguranca": dados.get('cla_seguranca', '') or "---",
+        "crv_numero": dados.get('crv_numero', '') or "---",
+        "data_hora": data_hora_atual
+    }
+
+    url_completa = request.host_url.rstrip('/') + url_for('validar_policial', id_consulta=id_consulta)
+    return jsonify({"id": id_consulta, "url_validacao": url_completa})
+
+@app.route('/validar/<id_consulta>')
+def validar_policial(id_consulta):
+    registro = BANCO_DADOS.get(id_consulta)
+    if not registro:
+        return "<h3>Erro 404: Registro não encontrado.</h3>", 404
+    return render_template_string(HTML_POLICIAL, dados=registro)
+
+if __name__ == "__main__":
+    porta = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=porta)
