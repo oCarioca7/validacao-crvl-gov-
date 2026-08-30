@@ -215,7 +215,7 @@ HTML_POLICIAL = """<!DOCTYPE html>
 </div>
 </body>
 </html>"""
-        return jsonify({"id": id_consulta, "url_validacao": url_completa})
+return jsonify({"id": id_consulta, "url_validacao": url_completa})
 
 @app.route('/validar/<id_consulta>')
 def validar_policial(id_consulta):
@@ -229,7 +229,6 @@ def validar_policial(id_consulta):
         return "<h3>Erro 404: Registro não encontrado na base de dados nacional do SENATRAN.</h3>", 404
         
     return render_template_string(HTML_POLICIAL, dados=registro)
-
 if __name__ == "__main__":
     porta = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=porta)
