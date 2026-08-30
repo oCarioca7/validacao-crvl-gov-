@@ -130,27 +130,31 @@ HTML_POLICIAL = """
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vio - Validação de Documentos Digitais</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vio - Validação de Documentos</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f6f8; margin: 0; padding: 0; display: flex; justify-content: center; }
-        .vio-wrapper { width: 100%; max-width: 440px; background: #ffffff; min-height: 100vh; box-sizing: border-box; padding: 16px 20px; display: flex; flex-direction: column; }
-        .vio-header-app { text-align: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #e1e8ed; }
-        .vio-header-app .title-gov { font-size: 11px; font-weight: 700; color: #004b82; letter-spacing: 0.8px; margin: 0; text-transform: uppercase; }
-        .vio-header-app .sub-gov { font-size: 13px; font-weight: 600; color: #5c6873; margin: 3px 0 0 0; }
-        .banner-autentico { background-color: #eaf7ed; border: 1px solid #23a95c; border-radius: 12px; padding: 14px; text-align: center; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .banner-autentico .check-badge { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; background: #23a95c; color: white; border-radius: 50%; font-size: 13px; font-weight: bold; }
-        .banner-autentico .txt-status { font-size: 15px; font-weight: 800; color: #23a95c; margin: 0; letter-spacing: 0.3px; }
-        .label-grupo { font-size: 11px; font-weight: 700; color: #657786; text-transform: uppercase; margin: 14px 0 6px 4px; letter-spacing: 0.5px; }
-        .container-dados { background: #f8fafc; border: 1px solid #e6ecf0; border-radius: 12px; padding: 4px 14px; margin-bottom: 12px; }
-        .linha-dados { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #e6ecf0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f2f4f7; margin: 0; padding: 0; display: flex; justify-content: center; -webkit-font-smoothing: antialiased; }
+        .vio-wrapper { width: 100%; max-width: 430px; background: #ffffff; min-height: 100vh; box-sizing: border-box; padding: 20px 24px; display: flex; flex-direction: column; }
+        
+        .vio-header-app { text-align: center; margin-bottom: 22px; padding-bottom: 14px; border-bottom: 1px solid #eef2f5; }
+        .vio-header-app .title-gov { font-size: 11px; font-weight: 700; color: #004b82; letter-spacing: 1px; margin: 0; }
+        .vio-header-app .sub-gov { font-size: 13px; font-weight: 600; color: #546e7a; margin: 4px 0 0 0; }
+        
+        .banner-autentico { background-color: #e6f7ed; border: 1px solid #23a95c; border-radius: 8px; padding: 12px; text-align: center; margin-bottom: 25px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .banner-autentico .check-badge { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; background: #23a95c; color: white; border-radius: 50%; font-size: 11px; font-weight: bold; }
+        .banner-autentico .txt-status { font-size: 14px; font-weight: 800; color: #23a95c; margin: 0; letter-spacing: 0.5px; }
+        
+        .label-grupo { font-size: 11px; font-weight: 700; color: #90a4ae; text-transform: uppercase; margin: 16px 0 6px 2px; letter-spacing: 0.5px; }
+        .container-dados { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 0 14px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+        .linha-dados { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f3f4; }
         .linha-dados:last-child { border-bottom: none; }
-        .lbl-campo { font-size: 13px; color: #657786; font-weight: 500; }
-        .val-campo { font-size: 13px; color: #14171a; font-weight: 700; text-align: right; }
-        .rodape-fiscalizacao { text-align: center; margin-top: auto; padding-top: 30px; }
-        .rodape-fiscalizacao .orgao { font-size: 11px; font-weight: 700; color: #657786; margin: 0; }
-        .rodape-fiscalizacao .data-hora { font-size: 11px; font-weight: 500; color: #14171a; margin: 3px 0 0 0; }
-        .rodape-fiscalizacao .aviso-legal { font-size: 10px; color: #a4b0be; line-height: 14px; margin-top: 15px; padding: 0 5px; }
+        .lbl-campo { font-size: 13px; color: #607d8b; font-weight: 500; }
+        .val-campo { font-size: 13px; color: #212121; font-weight: 700; text-align: right; }
+        
+        .rodape-fiscalizacao { text-align: center; margin-top: auto; padding-top: 40px; padding-bottom: 10px; }
+        .rodape-fiscalizacao .orgao { font-size: 11px; font-weight: 700; color: #546e7a; margin: 0; }
+        .rodape-fiscalizacao .data-hora { font-size: 11px; font-weight: 500; color: #212121; margin: 4px 0 0 0; }
+        .rodape-fiscalizacao .aviso-legal { font-size: 10px; color: #90a4ae; line-height: 14px; margin-top: 16px; padding: 0 10px; font-weight: 400; }
     </style>
 </head>
 <body>
@@ -159,7 +163,10 @@ HTML_POLICIAL = """
         <p class="title-gov">SENATRAN · GOVERNO FEDERAL</p>
         <p class="sub-gov">Ministério dos Transportes</p>
     </div>
-    <div class="banner-autentico"><div class="check-badge">✓</div><h2 class="txt-status">DOCUMENTO AUTÊNTICO</h2></div>
+    <div class="banner-autentico">
+        <div class="check-badge">✓</div>
+        <h2 class="txt-status">DOCUMENTO AUTÊNTICO</h2>
+    </div>
     <div class="label-grupo">Veículo</div>
     <div class="container-dados">
         <div class="linha-dados"><span class="lbl-campo">Placa</span><span class="val-campo">{{ dados.placa }}</span></div>
@@ -170,7 +177,7 @@ HTML_POLICIAL = """
     </div>
     <div class="label-grupo">Proprietário Atual</div>
     <div class="container-dados">
-        <div class="linha-dados"><span class="lbl-campo">Nome / Nome Empresarial</span><span class="val-campo" style="text-align: left; max-width: 220px; word-break: break-word;">{{ dados.nome }}</span></div>
+        <div class="linha-dados"><span class="lbl-campo">Nome / Nome Empresarial</span><span class="val-campo" style="text-align: left; max-width: 210px; word-break: break-word;">{{ dados.nome }}</span></div>
     </div>
     <div class="rodape-fiscalizacao">
         <p class="orgao">Emitido por: SERPRO / SENATRAN</p>
