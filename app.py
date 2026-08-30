@@ -13,12 +13,15 @@ app = Flask(__name__)
 # Altere, adicione ou remova campos nesta lista.
 # O sistema vai criar as caixas na tela e ler a foto automaticamente baseando-se nela.
 CAMPOS_ADMIN = [
-    "Nome Completo",
-    "CPF",
-    "Data de Nascimento",
-    "Nome da Mãe",
-    "Número do Documento (RG/CNH)"
+    "Nome ",
+    "CPF / CNPJ",
+    "Placa",
+    "Chassi",
+    "Código Renavam",
+    "Ano Fabricação",
+    "Ano Modelo"
 ]
+
 
 # Configuração de Segurança da API Key (Lê o painel do Render ou local se testar no PC)
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "SUA_CHAVE_LOCAL_SE_NAO_USAR_RENDER")
