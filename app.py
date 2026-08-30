@@ -183,10 +183,8 @@ def analisar_imagem():
         3. Se não encontrar alguma informação na imagem, deixe o valor do campo vazio ("").
         """
 
-        # Inicializa o modelo atual estável
-        model = genai.GenerativeModel('gemini-2.5-flash')
-        
-        resposta = model.generate_content([instrucao_prompt, img])
+        # Inicializa o modelo atualizado recomendado pelo Google
+        model = genai.GenerativeModel('gemini-3.6-flash')
 
 
         
