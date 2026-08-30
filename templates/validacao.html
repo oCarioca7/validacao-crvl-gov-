@@ -3,70 +3,221 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vio - Validação de Documentos Digitais</title>
+    <title>Validação de Documento</title>
+    
+    <!-- Meta tags para comportamento nativo de aplicativo -->
+    <meta name="theme-color" content="#002d56">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="/manifest.json">
+
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f5f6f8; margin: 0; padding: 0; display: flex; justify-content: center; -webkit-font-smoothing: antialiased; }
-        .vio-wrapper { width: 100%; max-width: 450px; background: #ffffff; min-height: 100vh; box-sizing: border-box; padding: 0; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin: 0 auto; }
-        .vio-top-navbar { background: #002d56; color: white; display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; box-sizing: border-box; }
-        .vio-top-navbar .nav-left { display: flex; align-items: center; gap: 14px; font-size: 20px; cursor: pointer; }
-        .vio-top-navbar .nav-title-app { font-size: 16px; font-weight: 700; letter-spacing: 0.3px; }
-        .vio-top-navbar .nav-right { font-size: 18px; font-weight: bold; cursor: pointer; opacity: 0.8; }
-        .main-scroll-content { padding: 16px 18px; display: flex; flex-direction: column; flex: 1; }
-        .vio-app-header { text-align: center; margin-bottom: 16px; display: flex; flex-direction: column; align-items: center; }
-        .vio-app-header .top-gov { font-size: 10px; font-weight: 700; color: #004b82; letter-spacing: 0.6px; margin: 0; text-transform: uppercase; }
-        .vio-app-header .sub-gov { font-size: 12px; font-weight: 600; color: #546e7a; margin: 3px 0 0 0; }
-        .success-banner { background-color: #eaf7ed; border: 1px solid #23a95c; border-radius: 8px; padding: 11px 14px; text-align: center; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .success-banner .check-circle { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; background: #23a95c; color: white; border-radius: 50%; font-size: 12px; font-weight: bold; }
-        .success-banner .status-title { font-size: 14px; font-weight: 800; color: #23a95c; margin: 0; letter-spacing: 0.3px; }
-        .group-label { font-size: 11px; font-weight: 700; color: #78909c; text-transform: uppercase; margin: 14px 0 6px 4px; letter-spacing: 0.5px; }
-        .card-container { background: #ffffff; border: 1px solid #cfd8dc; border-radius: 8px; padding: 0 14px; margin-bottom: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.01); }
-        .data-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 11px 0; border-bottom: 1px solid #f1f3f4; }
-        .data-row:last-child { border-bottom: none; }
-        .field-label { font-size: 13px; color: #607d8b; font-weight: 500; padding-top: 1px; }
-        .field-value { font-size: 13px; color: #212121; font-weight: 700; text-align: right; max-width: 210px; word-break: break-word; }
-        .footer-stamp { text-align: center; margin-top: auto; padding-top: 25px; border-top: 1px solid #e1e8ed; }
-        .footer-stamp .authority { font-size: 11px; font-weight: 700; color: #546e7a; margin: 0; }
-        .footer-stamp .timestamp { font-size: 11px; color: #90a4ae; margin-top: 4px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+        .app-container {
+            width: 100%;
+            max-width: 440px;
+            background: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 15px rgba(0,0,0,0.08);
+        }
+        /* Top Navigation Bar do Vio */
+        .vio-header {
+            background-color: #002d56;
+            color: #ffffff;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .vio-header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .back-icon {
+            font-size: 22px;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .header-title {
+            font-size: 17px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+        }
+        .menu-dots {
+            font-size: 20px;
+            font-weight: bold;
+            opacity: 0.85;
+            cursor: pointer;
+        }
+        /* Conteúdo Principal */
+        .content {
+            padding: 16px 16px 24px 16px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .gov-titles {
+            text-align: center;
+            margin: 6px 0 16px 0;
+        }
+        .gov-titles .main-gov {
+            font-size: 11px;
+            font-weight: 800;
+            color: #003666;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+        }
+        .gov-titles .sub-gov {
+            font-size: 12px;
+            font-weight: 500;
+            color: #5f738a;
+            margin-top: 3px;
+        }
+        /* Banner de Sucesso */
+        .status-badge {
+            background-color: #e8f5e9;
+            border: 1px solid #4caf50;
+            border-radius: 6px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+        .status-badge .icon-ok {
+            width: 22px;
+            height: 22px;
+            background-color: #2e7d32;
+            color: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .status-badge .text-ok {
+            color: #2e7d32;
+            font-size: 13.5px;
+            font-weight: 800;
+            letter-spacing: 0.4px;
+        }
+        /* Grupos e Cartões de Dados */
+        .section-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #708499;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 12px 0 6px 2px;
+        }
+        .info-card {
+            background: #ffffff;
+            border: 1px solid #d9e2ec;
+            border-radius: 8px;
+            padding: 0 14px;
+            margin-bottom: 12px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f4f8;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-row .label {
+            font-size: 13px;
+            color: #627d98;
+            font-weight: 500;
+            flex: 1;
+        }
+        .info-row .val {
+            font-size: 13px;
+            color: #102a43;
+            font-weight: 700;
+            text-align: right;
+            flex: 1.2;
+            word-break: break-word;
+        }
+        /* Rodapé de Validação */
+        .footer-serpro {
+            margin-top: auto;
+            text-align: center;
+            padding-top: 24px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .footer-serpro .cert-text {
+            font-size: 10.5px;
+            font-weight: 700;
+            color: #627d98;
+            letter-spacing: 0.4px;
+        }
+        .footer-serpro .cert-date {
+            font-size: 11px;
+            color: #829ab1;
+            margin-top: 3px;
+        }
     </style>
 </head>
 <body>
-<div class="vio-wrapper">
-    <div class="vio-top-navbar">
-        <div class="nav-left">
-            <span>&#8592;</span>
-            <span class="nav-title-app">Validação de Documento</span>
+    <div class="app-container">
+        <div class="vio-header">
+            <div class="vio-header-left">
+                <span class="back-icon" onclick="history.back()">&#8592;</span>
+                <span class="header-title">Validação de Documento</span>
+            </div>
+            <div class="menu-dots">&#8942;</div>
         </div>
-        <div class="nav-right">&#8942;</div>
+
+        <div class="content">
+            <div class="gov-titles">
+                <div class="main-gov">SECRETARIA NACIONAL DE TRÂNSITO</div>
+                <div class="sub-gov">SERVIÇO FEDERAL DE PROCESSAMENTO DE DADOS (SERPRO)</div>
+            </div>
+
+            <div class="status-badge">
+                <div class="icon-ok">&#10003;</div>
+                <div class="text-ok">DOCUMENTO AUTÊNTICO E VÁLIDO</div>
+            </div>
+
+            <div class="section-label">Dados do Veículo</div>
+            <div class="info-card">
+                <div class="info-row"><span class="label">Placa</span><span class="val">{{ dados.placa }}</span></div>
+                <div class="info-row"><span class="label">RENAVAM</span><span class="val">{{ dados.renavam }}</span></div>
+                <div class="info-row"><span class="label">Chassi</span><span class="val">{{ dados.chassi_mascarado }}</span></div>
+                <div class="info-row"><span class="label">Marca / Modelo</span><span class="val">{{ dados.modelo }}</span></div>
+                <div class="info-row"><span class="label">Ano Fabricação / Modelo</span><span class="val">{{ dados.ano }}</span></div>
+            </div>
+
+            <div class="section-label">Proprietário</div>
+            <div class="info-card">
+                <div class="info-row"><span class="label">Nome</span><span class="val">{{ dados.nome }}</span></div>
+            </div>
+
+            <div class="footer-serpro">
+                <div class="cert-text">AUTORIDADE CERTIFICADORA DO SERPRO</div>
+                <div class="cert-date">Validado em: {{ dados.data_hora }}</div>
+            </div>
+        </div>
     </div>
-    <div class="main-scroll-content">
-        <div class="vio-app-header">
-            <p class="top-gov">SECRETARIA NACIONAL DE TRÂNSITO</p>
-            <p class="sub-gov">SERVIÇO FEDERAL DE PROCESSAMENTO DE DADOS (SERPRO)</p>
-        </div>
-        <div class="success-banner">
-            <span class="check-circle">&#10003;</span>
-            <span class="status-title">DOCUMENTO AUTÊNTICO E VÁLIDO</span>
-        </div>
-
-        <div class="group-label">Dados do Veículo</div>
-        <div class="card-container">
-            <div class="data-row"><span class="field-label">Placa</span><span class="field-value">{{ dados.placa }}</span></div>
-            <div class="data-row"><span class="field-label">RENAVAM</span><span class="field-value">{{ dados.renavam }}</span></div>
-            <div class="data-row"><span class="field-label">Chassi</span><span class="field-value">{{ dados.chassi_mascarado }}</span></div>
-            <div class="data-row"><span class="field-label">Marca / Modelo</span><span class="field-value">{{ dados.modelo }}</span></div>
-            <div class="data-row"><span class="field-label">Ano Fabricação / Modelo</span><span class="field-value">{{ dados.ano }}</span></div>
-        </div>
-
-        <div class="group-label">Proprietário</div>
-        <div class="card-container">
-            <div class="data-row"><span class="field-label">Nome</span><span class="field-value">{{ dados.nome }}</span></div>
-        </div>
-
-        <div class="footer-stamp">
-            <p class="authority">AUTORIDADE CERTIFICADORA DO SERPRO</p>
-            <p class="timestamp">Validado em: {{ dados.data_hora }}</p>
-        </div>
-    </div>
-</div>
 </body>
 </html>
