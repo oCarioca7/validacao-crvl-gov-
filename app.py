@@ -205,5 +205,13 @@ def analisar_imagem():
         """
 
         model = genai.GenerativeModel('gemini-3.6-flash')
+dados_finais["DataHora"] = agora.strftime("%d/%m/%Y %H:%M:%S")
+        
+        return jsonify(dados_finais)
 
-resposta = model.generate_content([instrucao_prompt, img])texto_limpo = resposta.text.strip().replace("json", "").replace("", "")dados_finais = json.loads(texto_limpo)# Injeta a data e hora oficial de Brasília no momento exato do escaneamentofuso_horario = datetime.timezone(datetime.timedelta(hours=-3))agora = datetime.datetime.now(fuso_horario)dados_finais["DataHora"] = agora.strftime("%d/%m/%Y %H:%M:%S")return jsonify(dados_finais)except Exception as e:return jsonify({"error": str(e)}), 500if name == "main":porta = int(os.environ.get("PORT", 5000))app.run(host="0.0.0.0", port=porta)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+if __name__ == "__main__":
+    porta = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=porta)
