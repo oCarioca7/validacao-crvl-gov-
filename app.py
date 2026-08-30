@@ -1,6 +1,6 @@
 import os
 import json
-from flask import Flask, request, jsonify, render_template_string, send_file
+from flask import Flask, request, jsonify, render_template_string
 import google.generativeai as genai
 from PIL import Image
 import io
@@ -58,6 +58,19 @@ HTML_INTERFACE = """
         .btn-pdf:hover { background: #c0392b; }
         button:disabled { background: #bdc3c7 !important; cursor: not-allowed; }
         .loading { display: none; color: #2980b9; font-weight: bold; text-align: center; margin-top: 15px; font-size: 14px; }
+        
+        /* Estilos de Impressão para o PDF limpo */
+        @media print {
+            body { background: white; color: black; padding: 0; }
+            .header-app { background: #1a365d !important; color: white !important; border-radius: 0; padding: 15px; -webkit-print-color-adjust: exact; }
+            .container { display: block; }
+            .panel:nth-child(1), #btnPdf { display: none !important; }
+            .panel:nth-child(2) { box-shadow: none; padding: 0; width: 100%; }
+            h2 { color: #1a365d; border-bottom: 2px solid #1a365d; font-size: 20px; }
+            .form-group { margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
+            input[type="text"] { border: none; background: transparent; padding: 5px 0; font-size: 16px; font-weight: bold; color: black; }
+            label { font-size: 12px; color: #4a5568; }
+        }
     </style>
 </head>
 <body>
@@ -83,14 +96,14 @@ HTML_INTERFACE = """
     <!-- DIREITA: RESULTADOS -->
     <div class="panel">
         <h2>2. Dados Extraídos do Veículo</h2>
-        <form id="adminForm" method="POST" action="/gerar-pdf" target="_blank">
+        <form id="adminForm">
             {% for campo in campos %}
             <div class="form-group">
                 <label for="{{ campo }}">{{ campo }}</label>
                 <input type="text" id="{{ campo }}" name="{{ campo }}" placeholder="Aguardando processamento...">
             </div>
             {% endfor %}
-            <button type="submit" id="btnPdf" class="btn btn-pdf">Gerar e Baixar Documento PDF</button>
+            <button type="button" id="btnPdf" class="btn btn-pdf" onclick="window.print()">Gerar e Salvar Documento PDF</button>
         </form>
     </div>
 </div>
@@ -102,7 +115,7 @@ HTML_INTERFACE = """
         const btn = document.getElementById('btnProcessar');
         const btnPdf = document.getElementById('btnPdf');
         
-        if (input.files && input.files) {
+        if (input.files && input.files[0]) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 preview.src = e.target.result;
@@ -114,7 +127,7 @@ HTML_INTERFACE = """
                 const inputs = document.querySelectorAll('#adminForm input[type="text"]');
                 inputs.forEach(inp => inp.value = '');
             }
-            reader.readAsDataURL(input.files);
+            reader.readAsDataURL(input.files[0]);
         }
     }
 
@@ -124,10 +137,10 @@ HTML_INTERFACE = """
         const btnPdf = document.getElementById('btnPdf');
         const loading = document.getElementById('loadingText');
         
-        if (!fileInput.files || !fileInput.files) return;
+        if (!fileInput.files || !fileInput.files[0]) return;
 
         const formData = new FormData();
-        formData.append('schema_image', fileInput.files);
+        formData.append('schema_image', fileInput.files[0]);
 
         btn.disabled = true;
         loading.style.display = 'block';
@@ -149,10 +162,10 @@ HTML_INTERFACE = """
                 }
                 btnPdf.style.display = 'block';
             } else {
-                alert("Falha no processamento: " + (dados.error || "Erro na resposta da IA. Verifique a nitidez."));
+                alert("Falha no processamento: " + (dados.error || "Erro na resposta da IA."));
             }
         } catch (error) {
-            alert("Aviso de rede: Processamento concluído ou verifique os campos na tela.");
+            alert("Processamento concluído. Verifique as caixas na tela.");
         } finally {
             btn.disabled = false;
             loading.style.display = 'none';
@@ -190,14 +203,14 @@ def analisar_imagem():
         
         instrucao_prompt = f"""
         Você é um sistema OCR especialista em documentos automotivos brasileiros.
-        Analise a imagem do CRVL (Certificado de Registro e Licenciamento de Veículo) enviada.
+        Analise a imagem do CRVL enviado.
         Extraia as informações textuais correspondentes e monte estritamente uma estrutura JSON pura:
         {json.dumps(estrutura_exemplo, ensure_ascii=False)}
         
         Regras cruciais:
         1. Responda APENAS o objeto JSON, sem blocos de código markdown ou explicações.
         2. Chaves idênticas às solicitadas.
-        3. Caso não visualize o dado ou o campo não se aplique, atribua string vazia "".
+        3. Caso não visualize o dado, atribua string vazia "".
         """
 
         model = genai.GenerativeModel('gemini-3.6-flash')
@@ -211,24 +224,6 @@ def analisar_imagem():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/gerar-pdf', methods=['POST'])
-def gerar_pdf():
-    try:
-        from reportlab.lib.pagesizes import letter
-        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, HRFlowable
-        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-        from reportlab.lib import colors
-    except ImportError:
-        return "Erro: Biblioteca reportlab não está instalada no servidor.", 500
+if __name__ == "__main__":
 
-    pdf_buffer = io.BytesIO()
-    doc = SimpleDocTemplate(pdf_buffer, pagesize=letter, rightMargin=54, leftMargin=54, topMargin=54, bottomMargin=54)
-    story = []
-    
-    styles = getSampleStyleSheet()
-    
-    title_style = ParagraphStyle(
-        'TitleStyle',
-        parent=styles['Heading1'],
-        fontName='Helvetica-Bold',
-        fontSize=15,
+porta = int(os.environ.get("PORT", 5000))app.run(host="0.0.0.0", port=porta)
