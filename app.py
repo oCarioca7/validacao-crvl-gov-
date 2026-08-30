@@ -185,7 +185,9 @@ def analisar_imagem():
 
         # Inicializa o modelo atualizado recomendado pelo Google
         model = genai.GenerativeModel('gemini-3.6-flash')
-
+        
+        # Gera a resposta enviando as instruções e a imagem
+        resposta = model.generate_content([instrucao_prompt, img])
 
         
         # Limpa e converte o texto retornado para um dicionário JSON válido
