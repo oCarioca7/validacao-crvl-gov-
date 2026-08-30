@@ -96,11 +96,7 @@ HTML_INTERFACE = """
     const canvas = document.getElementById('documentCanvas');
     const ctx = canvas.getContext('2d');
     
-    // ====================================================================
-    # MAPEAMENTO AUTOMÁTICO DE COORDENADAS (AJUSTADO PARA O MODELO PADRÃO)
-    // ====================================================================
-    // Aqui estão salvos os locais exatos (X e Y) de cada caixinha do documento.
-    // O texto vai pular para cá sozinho assim que você digitar.
+    // Coordenadas fixas automatizadas
     const posicoesAutomaticas = {
         "Código Renavam": { x: 70, y: 375 },
         "Placa": { x: 70, y: 415 },
@@ -118,19 +114,18 @@ HTML_INTERFACE = """
     };
 
     function carregarImagemBase(input) {
-        if (input.files && input.files) {
+        if (input.files && input.files[0]) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 imagemBase.src = e.target.result;
                 imagemBase.onload = function() {
-                    // Força o tamanho padrão do documento impresso para bater com as coordenadas
                     canvas.width = 1190;
                     canvas.height = 1684;
                     document.getElementById('uploadText').innerText = "Modelo de CRVL Pronto e Sincronizado!";
                     atualizarDocumento();
                 }
             }
-            reader.readAsDataURL(input.files);
+            reader.readAsDataURL(input.files[0]);
         }
     }
 
@@ -140,13 +135,12 @@ HTML_INTERFACE = """
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(imagemBase, 0, 0, canvas.width, canvas.height);
         
-        // Estilo da fonte oficial para o preenchimento (Fonte escura estilo impressora)
         ctx.font = "bold 20px Courier New";
         ctx.fillStyle = "#111111";
         
         document.querySelectorAll('.input-doc').forEach(input => {
             const nomeCampo = input.getAttribute('data-campo');
-            const valorTexto = input.value.toUpperCase(); // Força ficar em Letra Maiúscula padrão Detran
+            const valorTexto = input.value.toUpperCase();
             const posicao = posicoesAutomaticas[nomeCampo];
             
             if (valorTexto && posicao) {
